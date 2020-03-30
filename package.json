@@ -1,0 +1,27 @@
+{
+  "name": "orbit",
+  "version": "1.0.0",
+  "description": "Discord classroom manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lnk2past/orbit.git"
+  },
+  "author": "Lnk2past",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lnk2past/orbit/issues"
+  },
+  "homepage": "https://github.com/Lnk2past/orbit",
+  "dependencies": {
+    "@octokit/app": "^4.2.0",
+    "@octokit/request": "^5.3.4",
+    "discord.js": "^12.1.1",
+    "github-api": "^3.3.0",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^7.18.2"
+  }
+}
