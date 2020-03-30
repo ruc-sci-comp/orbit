@@ -1,14 +1,14 @@
 const { request } = require("@octokit/request");
+var GitHub = require('github-api');
 
 module.exports = 
 {
     getHomeworkProject: async function(token, organization, assignmentProject) {
-        const { data } = await request(`GET /orgs/${organization}/projects`, {
-            headers: {
-            authorization: `token ${token}`,
-            accept: "application/vnd.github.inertia-preview+json",
-            },
-        });
+        var gh = new GitHub({
+            token: token
+         });
+        org = gh.getOrganization(organization);
+        var { data } = await org.listProjects();
         for (var project of data) {
             if (project.name == assignmentProject) {
                 return project.id;
@@ -17,22 +17,16 @@ module.exports =
     },
 
     getAssignments: async function(token, projectID, assignmentType) {
-        const { data } = await request(`GET /projects/${projectID}/columns`, {
-            headers: {
-            authorization: `token ${token}`,
-            accept: "application/vnd.github.inertia-preview+json",
-            },
+        var gh = new GitHub({
+            token: token
         });
-        for (var column of data) {
+        var project = gh.getProject(projectID);
+        var { data } = await project.listProjectColumns()
+        for (column of data) {
             if (column.name == assignmentType) {
-                var cards = (await request(`GET /projects/columns/${column.id}/cards`, {
-                    headers: {
-                    authorization: `token ${token}`,
-                    accept: "application/vnd.github.inertia-preview+json",
-                    },
-                })).data;
+                var { data } = await project.listColumnCards(column.id)
                 var assignments = [];
-                for (card of cards) {
+                for (card of data) {
                     assignments.push(card.note);
                 }
                 return assignments;
@@ -41,12 +35,11 @@ module.exports =
     },
 
     getUserRepos: async function(token, organization, user) {
-        const { data } = await request(`GET /orgs/${organization}/repos`, {
-            headers: {
-            authorization: `token ${token}`,
-            accept: "application/json",
-            },
+        var gh = new GitHub({
+            token: token
         });
+        org = gh.getOrganization(organization);
+        const { data } = await org.getRepos();
         userRepositories = [];
         for (var repo of data) {
             if (repo.name.endsWith(user)) {
