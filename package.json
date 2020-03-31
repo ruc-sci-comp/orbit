@@ -17,11 +17,10 @@
   },
   "homepage": "https://github.com/Lnk2past/orbit",
   "dependencies": {
-    "@octokit/app": "^4.2.0",
-    "@octokit/request": "^5.3.4",
+    "@octokit/auth-app": "^2.4.4",
     "discord.js": "^12.1.1",
     "github-api": "^3.3.0",
-    "jsonwebtoken": "^8.5.1",
+    "npm": "^6.14.4",
     "pg": "^7.18.2"
   }
 }

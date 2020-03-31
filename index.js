@@ -21,7 +21,6 @@ const pool = new pg.Pool({
     port: db_config.port,
 });
 
-var token = '';
 var guild = undefined;
 
 const client = new Discord.Client();
@@ -52,16 +51,21 @@ client.on('message', msg => {
     if (msg.content === 'ping') {
         msg.channel.send('pong');
     }
-    if (msg.content.startsWith('!assignment') && msg.channel.name == 'assignments') {
-        [_, ...assignmentType] = msg.content.split(' ');
-        if (assignmentType.length == 0) {
-            assignmentType = 'current'
-        }
-        else {
-            assignmentType = assignmentType[0].trim().toLowerCase();
-        }
-        auth.getToken(github_config.app_id, github_config.private_key_path).then((new_token) => {
-            token = new_token;
+
+    var [command, ...args] = msg.content.split(' ', 1);
+    command = command.trim()
+    if (!['!assignment', '!grade'].includes(command)) {
+        return;
+    }
+
+    auth.getToken(github_config.app_id, github_config.installation_id, github_config.client_id, github_config.client_secret, github_config.private_key_path).then( (token) => {
+        if (msg.content.startsWith('!assignment') && msg.channel.name == 'assignments') {
+            if (args.length == 0) {
+                assignmentType = 'current'
+            }
+            else {
+                assignmentType = assignmentType[0].trim().toLowerCase();
+            }
             github.getHomeworkProject(token, github_config.organization, github_config.assignmentProject).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
                     for (assignment of assignments) {
@@ -69,12 +73,8 @@ client.on('message', msg => {
                     }
                 })
             });
-        })
-    }
-
-    if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
-        auth.getToken(github_config.app_id, github_config.private_key_path).then((new_token) => {
-            token = new_token;
+        }
+        if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, github_config.organization, githubUserName).then( (userRepositories) => {
                     github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
@@ -92,8 +92,8 @@ client.on('message', msg => {
                     })
                 })
             })
-        })
-    }
+        }
+    })
 });
 
 client.login(discord_config.token);
