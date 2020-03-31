@@ -43,9 +43,49 @@ module.exports =
         userRepositories = [];
         for (var repo of data) {
             if (repo.name.endsWith(user)) {
-                userRepositories.push(repo.name);
+                userRepositories.push(repo);
             }
         }
         return userRepositories;
+    },
+
+    getRepoIssues: async function(token, user, repository, gradeIssueTitle) {
+        var gh = new GitHub({
+            token: token
+        });
+        issues = gh.getIssues(user, repository);
+        const { data } = await issues.listIssues();
+        for (var issue of data) {
+            if (issue.title == gradeIssueTitle) {
+                var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
+                return new Grade(repository, parseFloat(score), parseFloat(total));
+            }
+        }
+    },
+
+    getGrades: async function(token, user, repositories, gradeIssueTitle) {
+        var gh = new GitHub({
+            token: token
+        });
+        grades = []
+        for (repository of repositories) {
+            issues = gh.getIssues(user, repository.name);
+            const { data } = await issues.listIssues();
+            for (var issue of data) {
+                if (issue.title == gradeIssueTitle) {
+                    var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
+                    grades.push(new Grade(repository.name, parseFloat(score), parseFloat(total)));
+                }
+            }
+        }
+        return grades;
+    }
+}
+
+class Grade {
+    constructor(a, s, t) {
+        this.assignment = a;
+        this.score = s;
+        this.total = t;
     }
 }

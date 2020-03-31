@@ -10,6 +10,8 @@ var db_config = config.db_config
 var discord_config = config.discord_config
 var github_config = config.github_config
 
+const div = '\`\`\`';
+
 const pool = new pg.Pool({
     user: db_config.user,
     host: db_config.host,
@@ -28,9 +30,8 @@ client.on('ready', () => {
 
 client.on('message', msg => {
     if (msg.content === 'ping') {
-        msg.author.send('pong');
+        msg.channel.send('pong');
     }
-
     if (msg.content.startsWith('!assignment')) {
         [_, ...assignmentType] = msg.content.split(' ');
         if (assignmentType.length == 0) {
@@ -56,9 +57,19 @@ client.on('message', msg => {
             token = new_token;
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, github_config.organization, githubUserName).then( (userRepositories) => {
-                    for (userRepository of userRepositories) {
-                        console.log(userRepository);
-                    }
+                    github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
+                        score = 0.0;
+                        total = 0.0;
+                        reply = '```'
+                        for (var grade of grades) {
+                            reply += grade + '\n'
+                            score += grade.score;
+                            total += grade.total;
+                        }
+                        reply += `${div}${div}Course Grade: ${score}/${total} = ${100.0 * score/total}${div}`;
+                        msg.author.send(reply);
+                        msg.delete();
+                    })
                 })
             })
         })
