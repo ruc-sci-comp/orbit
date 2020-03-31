@@ -22,18 +22,37 @@ const pool = new pg.Pool({
 });
 
 var token = '';
+var guild = undefined;
 
 const client = new Discord.Client();
 
+createChannel = async function(channels, name, type, parent=undefined) {
+    for (var channel of channels.cache.values()) {
+        if (channel.name == name && channel.type == type) {
+            return channel.id;
+        }
+    }
+    return (await guild.channels.create(name, {type: type, parent: parent})).id
+}
+
+prepareChannels = function(channels) {
+    createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
+        createChannel(channels, 'assignments', 'text', orbitCategoryID);
+        createChannel(channels, 'grades', 'text', orbitCategoryID);
+    })
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
-});
+    guild = client.guilds.cache.values().next().value;
+    prepareChannels(guild.channels);
+})
 
 client.on('message', msg => {
     if (msg.content === 'ping') {
         msg.channel.send('pong');
     }
-    if (msg.content.startsWith('!assignment')) {
+    if (msg.content.startsWith('!assignment') && msg.channel.name == 'assignments') {
         [_, ...assignmentType] = msg.content.split(' ');
         if (assignmentType.length == 0) {
             assignmentType = 'current'
@@ -53,7 +72,7 @@ client.on('message', msg => {
         })
     }
 
-    if (msg.content.startsWith('!grade')) {
+    if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
         auth.getToken(github_config.app_id, github_config.private_key_path).then((new_token) => {
             token = new_token;
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
