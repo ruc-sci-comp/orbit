@@ -10,7 +10,8 @@ var db_config = config.db_config
 var discord_config = config.discord_config
 var github_config = config.github_config
 
-const div = '\`\`\`';
+const B = '\`\`\`';
+const BB = B + B;
 
 const pool = new pg.Pool({
     user: db_config.user,
@@ -60,13 +61,13 @@ client.on('message', msg => {
                     github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
                         score = 0.0;
                         total = 0.0;
-                        reply = '```'
+                        reply = B
                         for (var grade of grades) {
                             reply += grade + '\n'
                             score += grade.score;
                             total += grade.total;
                         }
-                        reply += `${div}${div}Course Grade: ${score}/${total} = ${100.0 * score/total}${div}`;
+                        reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
                         msg.author.send(reply);
                         msg.delete();
                     })
