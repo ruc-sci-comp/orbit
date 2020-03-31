@@ -88,4 +88,8 @@ class Grade {
         this.score = s;
         this.total = t;
     }
+
+    toString() {
+        return `Grade { assignment: '${this.assignment}', score: ${this.score}, total: ${this.total} }`
+    }
 }
