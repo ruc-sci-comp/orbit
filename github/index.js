@@ -49,20 +49,6 @@ module.exports =
         return userRepositories;
     },
 
-    getRepoIssues: async function(token, user, repository, gradeIssueTitle) {
-        var gh = new GitHub({
-            token: token
-        });
-        issues = gh.getIssues(user, repository);
-        const { data } = await issues.listIssues();
-        for (var issue of data) {
-            if (issue.title == gradeIssueTitle) {
-                var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
-                return new Grade(repository, parseFloat(score), parseFloat(total));
-            }
-        }
-    },
-
     getGrades: async function(token, user, repositories, gradeIssueTitle) {
         var gh = new GitHub({
             token: token
@@ -70,7 +56,9 @@ module.exports =
         grades = []
         for (repository of repositories) {
             issues = gh.getIssues(user, repository.name);
-            const { data } = await issues.listIssues();
+            const { data } = await issues.listIssues({
+                state: 'all'
+            });
             for (var issue of data) {
                 if (issue.title == gradeIssueTitle) {
                     var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');

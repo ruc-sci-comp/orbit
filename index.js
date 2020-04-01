@@ -54,19 +54,21 @@ client.on('message', msg => {
 
     var [command, ...args] = msg.content.split(' ', 1);
     command = command.trim()
-    if (!['!assignment', '!grade'].includes(command)) {
+    if (!['!assignments', '!grades'].includes(command)) {
         return;
     }
+    
+    var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
 
-    auth.getToken(github_config.app_id, github_config.installation_id, github_config.client_id, github_config.client_secret, github_config.private_key_path).then( (token) => {
-        if (msg.content.startsWith('!assignment') && msg.channel.name == 'assignments') {
+    auth.getToken(github_config.appID, github_config.installationID, github_config.clientID, github_config.clientSecret, github_config.privateKeyPath).then( (token) => {
+        if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
             if (args.length == 0) {
                 assignmentType = 'current'
             }
             else {
                 assignmentType = assignmentType[0].trim().toLowerCase();
             }
-            github.getHomeworkProject(token, github_config.organization, github_config.assignmentProject).then((projectID) => {
+            github.getHomeworkProject(token, github_config.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
                     for (assignment of assignments) {
                         msg.channel.send(assignment);
@@ -74,7 +76,7 @@ client.on('message', msg => {
                 })
             });
         }
-        if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
+        if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, github_config.organization, githubUserName).then( (userRepositories) => {
                     github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
