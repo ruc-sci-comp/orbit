@@ -70,9 +70,13 @@ client.on('message', msg => {
             }
             github.getHomeworkProject(token, github_config.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
+                    reply = '';
                     for (assignment of assignments) {
-                        msg.channel.send(assignment);
+                        reply += assignment + '\n';
                     }
+                    msg.channel.send(reply)
+                        .then( (_) => pass)
+                        .catch(console.error);
                 })
             });
         }
@@ -82,15 +86,16 @@ client.on('message', msg => {
                     github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
                         score = 0.0;
                         total = 0.0;
-                        reply = B
+                        reply = B;
                         for (var grade of grades) {
-                            reply += grade + '\n'
+                            reply += grade + '\n';
                             score += grade.score;
                             total += grade.total;
                         }
                         reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-                        msg.author.send(reply);
-                        msg.delete();
+                        msg.author.send(reply)
+                            .then(msg => {msg.delete();})
+                            .catch(console.error);;
                     })
                 })
             })
