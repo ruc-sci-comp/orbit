@@ -75,7 +75,7 @@ client.on('message', msg => {
                         reply += assignment + '\n';
                     }
                     msg.channel.send(reply)
-                        .then( (_) => pass)
+                        .then(_ => {})
                         .catch(console.error);
                 })
             });
@@ -94,7 +94,7 @@ client.on('message', msg => {
                         }
                         reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
                         msg.author.send(reply)
-                            .then(msg => {msg.delete();})
+                            .then(_ => {msg.delete();})
                             .catch(console.error);;
                     })
                 })
