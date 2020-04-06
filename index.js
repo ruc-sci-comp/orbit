@@ -42,6 +42,7 @@ prepareChannels = function(channels) {
 
     for (course of githubConfig.courses) {
         createChannel(channels, course, 'category').then( (courseID) => {
+            createChannel(channels, course + '-general', 'text', courseID);
             createChannel(channels, 'assignments', 'text', courseID);
             createChannel(channels, 'grades', 'text', courseID);
         });
