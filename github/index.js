@@ -1,5 +1,6 @@
 const { request } = require("@octokit/request");
 var GitHub = require('github-api');
+const { Octokit } = require("@octokit/rest");
 
 module.exports = 
 {
@@ -67,6 +68,51 @@ module.exports =
             }
         }
         return grades;
+    },
+
+    getReposWithTopics: async function(token, organization, topics) {
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1',
+            previews: ["mercy-preview"]
+        });
+
+        // TODO this code we want, but it does not work
+        // https://github.com/octokit/rest.js/issues/1662
+        // const { data } = await octokit.teams.listReposInOrg({
+        //     org: organization,
+        //     team_slug: 'Students',
+        // });
+        // repos = [];
+        // for (var repo of data) {
+        //     for (repoTopic of repo.topics) {
+        //         if (topics.includes(repoTopic)) {
+        //             repos.push(repo.name);
+        //             break;
+        //         }
+        //     }
+        // }
+
+        const { data } = await octokit.repos.listForOrg({
+            org: organization,
+            headers: {
+                accept: 'application/vnd.github.+json'
+            },
+        });
+        repos = [];
+        for (var repo of data) {
+            // we only care about class repositories
+            if (!repo.name.startsWith('cpp-class-')) {
+                continue;
+            }
+            for (repoTopic of repo.topics) {
+                if (topics.includes(repoTopic)) {
+                    repos.push(new Repository(repo.name, repo.html_url));
+                    break;
+                }
+            }
+        }
+        return repos;
     }
 }
 
@@ -79,5 +125,16 @@ class Grade {
 
     toString() {
         return `Grade { assignment: '${this.assignment}', score: ${this.score}, total: ${this.total} }`
+    }
+}
+
+class Repository {
+    constructor(r, u) {
+        this.name = r;
+        this.html_url = u
+    }
+
+    toString() {
+        return `\`${this.name}:\` ${this.html_url}`
     }
 }

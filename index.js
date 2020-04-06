@@ -52,12 +52,13 @@ client.on('message', msg => {
         msg.channel.send('pong');
     }
 
-    var [command, ...args] = msg.content.split(' ', 1);
+    var [command, ...args] = msg.content.split(' ');
     command = command.trim()
-    if (!['!assignments', '!grades'].includes(command)) {
+
+    if (!['!assignments', '!grades', '!info'].includes(command)) {
         return;
     }
-    
+
     var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
 
     auth.getToken(github_config.appID, github_config.installationID, github_config.clientID, github_config.clientSecret, github_config.privateKeyPath).then( (token) => {
@@ -99,6 +100,20 @@ client.on('message', msg => {
                     })
                 })
             })
+        }
+        if (msg.content.startsWith('!info')) {
+            if (args.length == 0) {
+                msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
+                return;
+            }
+            github.getReposWithTopics(token, github_config.organization, args)
+                .then(information => {
+                    reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
+                    reply += information.join('\n')
+                    msg.channel.send(reply)
+                        .then(_ => {})
+                        .catch(console.error);
+                });
         }
     })
 });
