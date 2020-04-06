@@ -1,15 +1,17 @@
-const { request } = require("@octokit/request");
-var GitHub = require('github-api');
 const { Octokit } = require("@octokit/rest");
 
 module.exports = 
 {
     getHomeworkProject: async function(token, organization, assignmentProject) {
-        var gh = new GitHub({
-            token: token
-         });
-        org = gh.getOrganization(organization);
-        var { data } = await org.listProjects();
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1'
+        });
+
+        const { data } = await octokit.projects.listForOrg({
+            org: organization
+        });
+
         for (var project of data) {
             if (project.name == assignmentProject) {
                 return project.id;
@@ -18,14 +20,20 @@ module.exports =
     },
 
     getAssignments: async function(token, projectID, assignmentType) {
-        var gh = new GitHub({
-            token: token
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1'
         });
-        var project = gh.getProject(projectID);
-        var { data } = await project.listProjectColumns()
+
+        var { data } = await octokit.projects.listColumns({
+            project_id: projectID
+        });
+
         for (column of data) {
             if (column.name == assignmentType) {
-                var { data } = await project.listColumnCards(column.id)
+                var { data } = await octokit.projects.listCards({
+                    column_id: column.id
+                });
                 var assignments = [];
                 for (card of data) {
                     assignments.push(card.note);
@@ -36,11 +44,13 @@ module.exports =
     },
 
     getUserRepos: async function(token, organization, user) {
-        var gh = new GitHub({
-            token: token
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1'
         });
-        org = gh.getOrganization(organization);
-        const { data } = await org.getRepos();
+        const { data } = await octokit.repos.listForOrg({
+            org: organization
+        });
         userRepositories = [];
         for (var repo of data) {
             if (repo.name.endsWith(user)) {
@@ -51,13 +61,15 @@ module.exports =
     },
 
     getGrades: async function(token, user, repositories, gradeIssueTitle) {
-        var gh = new GitHub({
-            token: token
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1'
         });
         grades = []
         for (repository of repositories) {
-            issues = gh.getIssues(user, repository.name);
-            const { data } = await issues.listIssues({
+            const { data } = await octokit.issues.listForRepo({
+                owner: user,
+                repo: repository.name,
                 state: 'all'
             });
             for (var issue of data) {
