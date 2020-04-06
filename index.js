@@ -38,6 +38,8 @@ prepareChannels = function(channels) {
     createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
         createChannel(channels, 'assignments', 'text', orbitCategoryID);
         createChannel(channels, 'grades', 'text', orbitCategoryID);
+        createChannel(channels, 'sandbox', 'text', orbitCategoryID);
+        createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
     })
 }
 
