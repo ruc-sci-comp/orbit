@@ -6,19 +6,19 @@ var config = require('./config')
 var db = require('./db')
 var github = require('./github')
 
-var db_config = config.db_config
-var discord_config = config.discord_config
-var github_config = config.github_config
+var dbConfig = config.dbConfig
+var discordConfig = config.discordConfig
+var githubConfig = config.githubConfig
 
 const B = '\`\`\`';
 const BB = B + B;
 
 const pool = new pg.Pool({
-    user: db_config.user,
-    host: db_config.host,
-    database: db_config.database,
-    password: db_config.password,
-    port: db_config.port,
+    user: dbConfig.user,
+    host: dbConfig.host,
+    database: dbConfig.database,
+    password: dbConfig.password,
+    port: dbConfig.port,
 });
 
 var guild = undefined;
@@ -61,7 +61,7 @@ client.on('message', msg => {
 
     var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
 
-    auth.getToken(github_config.appID, github_config.installationID, github_config.clientID, github_config.clientSecret, github_config.privateKeyPath).then( (token) => {
+    auth.getToken(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath).then( (token) => {
         if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
             if (args.length == 0) {
                 assignmentType = 'current'
@@ -69,7 +69,7 @@ client.on('message', msg => {
             else {
                 assignmentType = assignmentType[0].trim().toLowerCase();
             }
-            github.getHomeworkProject(token, github_config.organization, courseID).then((projectID) => {
+            github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
                     reply = '';
                     for (assignment of assignments) {
@@ -83,8 +83,8 @@ client.on('message', msg => {
         }
         if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                github.getUserRepos(token, github_config.organization, githubUserName).then( (userRepositories) => {
-                    github.getGrades(token, github_config.organization, userRepositories, github_config.gradeIssueTitle).then( (grades) => {
+                github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
+                    github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
                         score = 0.0;
                         total = 0.0;
                         reply = B;
@@ -106,7 +106,7 @@ client.on('message', msg => {
                 msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
-            github.getReposWithTopics(token, github_config.organization, args)
+            github.getReposWithTopics(token, githubConfig.organization, args)
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
                     reply += information.join('\n')
@@ -118,4 +118,4 @@ client.on('message', msg => {
     })
 });
 
-client.login(discord_config.token);
+client.login(discordConfig.token);
