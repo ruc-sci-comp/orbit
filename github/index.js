@@ -1,128 +1,116 @@
-const { Octokit } = require("@octokit/rest");
-
 module.exports = 
 {
-    getHomeworkProject: async function(token, organization, assignmentProject) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-
-        const { data } = await octokit.projects.listForOrg({
-            org: organization
-        });
-
-        for (var project of data) {
-            if (project.name == assignmentProject) {
-                return project.id;
-            }
-        }
-    },
-
-    getAssignments: async function(token, projectID, assignmentType) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-
-        var { data } = await octokit.projects.listColumns({
-            project_id: projectID
-        });
-
-        for (column of data) {
-            if (column.name == assignmentType) {
-                var { data } = await octokit.projects.listCards({
-                    column_id: column.id
-                });
-                var assignments = [];
-                for (card of data) {
-                    assignments.push(card.note);
+    getProjectId: async function(graphqlWithAuth, organization, project) {
+        var query = `query ($organization: String!, $project: String!) {
+            organization(login: $organization) {
+                projects(search: $project, first: 1) {
+                    nodes {
+                        id
+                    }
                 }
-                return assignments;
             }
-        }
+        }`;
+        args = {
+            organization:organization,
+            project:project
+        };
+        const result = await graphqlWithAuth(query, args);
+        return result.organization.projects.nodes[0].id;
     },
 
-    getUserRepos: async function(token, organization, user) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-        const { data } = await octokit.repos.listForOrg({
-            org: organization
-        });
-        userRepositories = [];
-        for (var repo of data) {
-            if (repo.name.endsWith(user)) {
-                userRepositories.push(repo);
+    getCards: async function(graphqlWithAuth, organization, project, column) {
+        var query = `query ($organization: String!, $project: String!) {
+            organization(login: $organization) {
+              projects(search: $project, first: 1) {
+                nodes {
+                  columns(first: 10) {
+                    nodes {
+                      name
+                      cards(first: 10) {
+                        nodes {
+                          note
+                        }
+                        pageInfo {
+                          hasNextPage
+                          endCursor
+                        }
+                      }
+                    }
+                    pageInfo {
+                      hasNextPage
+                      endCursor
+                    }
+                  }
+                }
+              }
             }
-        }
-        return userRepositories;
+          }`;
+        args = {
+            organization:organization,
+            project:project
+        };
+        const result = await graphqlWithAuth(query, args);
+        const column = result.organization.projects.nodes[0].columns.nodes.filter(c => c.name == column)[0];
+        return column.cards.nodes;
     },
 
-    getGrades: async function(token, user, repositories, gradeIssueTitle) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
+    getIssuesForUserWithLabel: async function(graphqlWithAuth, organization, user, label) {
+        var query = `query ($q: String!, $l: String!) {
+            search(query: $q, type: REPOSITORY, first: 10) {
+              nodes {
+                ... on Repository {
+                  name
+                  issues(filterBy: {labels: $l}, first:10) {
+                    nodes {
+                      title
+                      body
+                    }
+                  }
+                }
+              }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
+            }
+          }`;
+        args = {
+            q: `org:${organization} ${user} in:name`,
+            l: label
+        };
+        const result = await graphqlWithAuth(query, args)
         grades = []
-        for (repository of repositories) {
-            const { data } = await octokit.issues.listForRepo({
-                owner: user,
-                repo: repository.name,
-                state: 'all'
-            });
-            for (var issue of data) {
-                if (issue.title == gradeIssueTitle) {
-                    var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
-                    grades.push(new Grade(repository.name, parseFloat(score), parseFloat(total)));
-                }
+        for (var repository of result.search.nodes) {
+            if (!repository.issues.nodes.length) {
+                continue;
             }
+            const issue = repository.issues.nodes[0]
+            var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
+            grades.push(new Grade(repository.name, parseFloat(score), parseFloat(total)));
+
         }
         return grades;
     },
 
-    getReposWithTopics: async function(token, organization, topics) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1',
-            previews: ["mercy-preview"]
-        });
-
-        // TODO this code we want, but it does not work
-        // https://github.com/octokit/rest.js/issues/1662
-        // const { data } = await octokit.teams.listReposInOrg({
-        //     org: organization,
-        //     team_slug: 'Students',
-        // });
-        // repos = [];
-        // for (var repo of data) {
-        //     for (repoTopic of repo.topics) {
-        //         if (topics.includes(repoTopic)) {
-        //             repos.push(repo.name);
-        //             break;
-        //         }
-        //     }
-        // }
-
-        const { data } = await octokit.repos.listForOrg({
-            org: organization,
-            headers: {
-                accept: 'application/vnd.github.+json'
-            },
-        });
-        repos = [];
-        for (var repo of data) {
-            // we only care about class repositories
-            if (!repo.name.startsWith('cpp-class-')) {
-                continue;
-            }
-            for (repoTopic of repo.topics) {
-                if (topics.includes(repoTopic)) {
-                    repos.push(new Repository(repo.name, repo.html_url));
-                    break;
+    getReposWithTopics: async function(graphqlWithAuth, organization, topic) {
+        var query = `query ($q: String!) {
+            search(query: $q, type: REPOSITORY, first: 10) {
+              nodes {
+                ... on Repository {
+                  name
+                  url
                 }
+              }
             }
+          }`;
+        args = {
+            q: `org:${organization} topic:${topic}`,
+        };
+        const result = await graphqlWithAuth(query, args)
+        repos = []
+        for (repo of result.search.nodes) {
+            repos.push(new Repository(repo.name, repo.url));
+            break;
         }
         return repos;
     }
@@ -143,10 +131,10 @@ class Grade {
 class Repository {
     constructor(r, u) {
         this.name = r;
-        this.html_url = u
+        this.url = u
     }
 
     toString() {
-        return `\`${this.name}:\` ${this.html_url}`
+        return `\`${this.name}:\` ${this.url}`
     }
 }

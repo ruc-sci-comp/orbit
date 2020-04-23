@@ -69,7 +69,7 @@ client.on('message', msg => {
 
     var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
 
-    auth.getToken(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath).then( (token) => {
+    auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
         if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
             if (args.length == 0) {
                 assignmentType = 'current'
@@ -77,35 +77,32 @@ client.on('message', msg => {
             else {
                 assignmentType = assignmentType[0].trim().toLowerCase();
             }
-            github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
-                github.getAssignments(token, projectID, assignmentType).then((assignments) => {
-                    reply = '';
-                    for (assignment of assignments) {
-                        reply += assignment + '\n';
-                    }
-                    msg.channel.send(reply)
-                        .then(_ => {})
-                        .catch(console.error);
-                })
-            });
+
+            github.getCards(graphqlWithAuth, githubConfig.organization, courseID, assignmentType).then((cards) => {
+                reply = '';
+                for (card of cards.cards.nodes) {
+                    reply += card.note + '\n';
+                }
+                msg.channel.send(reply)
+                    .then(_ => {})
+                    .catch(console.error);
+            })
         }
         if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
-                    github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
-                        score = 0.0;
-                        total = 0.0;
-                        reply = B;
-                        for (var grade of grades) {
-                            reply += grade + '\n';
-                            score += grade.score;
-                            total += grade.total;
-                        }
-                        reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-                        msg.author.send(reply)
-                            .then(_ => {msg.delete();})
-                            .catch(console.error);;
-                    })
+                github.getIssuesForUserWithLabel(graphqlWithAuth, githubConfig.organization, githubUserName, 'grade').then( (grades) => {
+                    score = 0.0;
+                    total = 0.0;
+                    reply = B;
+                    for (var grade of grades) {
+                        reply += grade + '\n';
+                        score += grade.score;
+                        total += grade.total;
+                    }
+                    reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
+                    msg.author.send(reply)
+                        .then(_ => {msg.delete();})
+                        .catch(console.error);
                 })
             })
         }
@@ -114,14 +111,14 @@ client.on('message', msg => {
                 msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
-            github.getReposWithTopics(token, githubConfig.organization, args)
+            github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args[0])
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
                     reply += information.join('\n')
                     msg.channel.send(reply)
                         .then(_ => {})
                         .catch(console.error);
-                });
+            });
         }
     })
 });

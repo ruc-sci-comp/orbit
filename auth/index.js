@@ -1,19 +1,21 @@
 const fs = require('fs');
 const { createAppAuth } = require("@octokit/auth-app");
+const { graphql } = require("@octokit/graphql");
 
 module.exports = 
 {
-    getToken: async function(applicationID, installationId, clientId, clientSecret, privateKeyFile) {
+    getGraphqlWithAuth: async function(applicationID, installationId, privateKeyFile) {
         var privateKey = fs.readFileSync(privateKeyFile, 'utf8');
-
         const auth = createAppAuth({
             id: applicationID,
             privateKey: privateKey,
-            installationId: installationId,
-            clientId: clientId,
-            clientSecret: clientSecret,
+            installationId: installationId
         });
-        const installationAuthentication = await auth({ type: "installation" });
-        return installationAuthentication.token;
+        const graphqlWithAuth = graphql.defaults({
+            request: {
+                hook: auth.hook
+            }
+        });
+        return graphqlWithAuth;
     }
 }
