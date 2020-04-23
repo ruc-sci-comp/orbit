@@ -80,7 +80,7 @@ client.on('message', msg => {
 
             github.getCards(graphqlWithAuth, githubConfig.organization, courseID, assignmentType).then((cards) => {
                 reply = '';
-                for (card of cards.cards.nodes) {
+                for (card of cards) {
                     reply += card.note + '\n';
                 }
                 msg.channel.send(reply)
@@ -90,7 +90,7 @@ client.on('message', msg => {
         }
         if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                github.getIssuesForUserWithLabel(graphqlWithAuth, githubConfig.organization, githubUserName, 'grade').then( (grades) => {
+                github.getGradeIssuesForUser(graphqlWithAuth, githubConfig.organization, githubUserName, 'grade').then( (grades) => {
                     score = 0.0;
                     total = 0.0;
                     reply = B;
