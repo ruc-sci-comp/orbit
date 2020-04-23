@@ -111,7 +111,7 @@ client.on('message', msg => {
                 msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
-            github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args[0])
+            github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args)
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
                     reply += information.join('\n')

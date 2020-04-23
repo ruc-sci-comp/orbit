@@ -50,8 +50,7 @@ module.exports =
             project:project
         };
         const result = await graphqlWithAuth(query, args);
-        const column = result.organization.projects.nodes[0].columns.nodes.filter(c => c.name == column)[0];
-        return column.cards.nodes;
+        return result.organization.projects.nodes[0].columns.nodes.filter(c => c.name == column)[0].cards.nodes;
     },
 
     getIssuesForUserWithLabel: async function(graphqlWithAuth, organization, user, label) {
@@ -92,25 +91,26 @@ module.exports =
         return grades;
     },
 
-    getReposWithTopics: async function(graphqlWithAuth, organization, topic) {
-        var query = `query ($q: String!) {
-            search(query: $q, type: REPOSITORY, first: 10) {
-              nodes {
-                ... on Repository {
-                  name
-                  url
-                }
-              }
-            }
-          }`;
-        args = {
-            q: `org:${organization} topic:${topic}`,
-        };
-        const result = await graphqlWithAuth(query, args)
+    getReposWithTopics: async function(graphqlWithAuth, organization, topics) {
         repos = []
-        for (repo of result.search.nodes) {
-            repos.push(new Repository(repo.name, repo.url));
-            break;
+        for (topic of topics) {
+            var query = `query ($q: String!) {
+                search(query: $q, type: REPOSITORY, first: 10) {
+                nodes {
+                    ... on Repository {
+                    name
+                    url
+                    }
+                }
+                }
+            }`;
+            args = {
+                q: `org:${organization} topic:${topic}`,
+            };
+            const result = await graphqlWithAuth(query, args)
+            for (repo of result.search.nodes) {
+                repos.push(new Repository(repo.name, repo.url));
+            }
         }
         return repos;
     }
