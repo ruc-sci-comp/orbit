@@ -20,7 +20,7 @@
     "@octokit/auth-app": "^2.4.4",
     "@octokit/graphql": "^4.3.1",
     "discord.js": "^12.1.1",
-    "npm": "^6.14.4",
+    "npm": "^6.14.6",
     "pg": "^7.18.2"
   }
 }
