@@ -1,3 +1,6 @@
+const B = '\`\`\`';
+const BB = B + B;
+
 module.exports = 
 {
     calculateGrade: async function(grades) {
