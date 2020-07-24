@@ -5,6 +5,7 @@ var auth = require('./auth')
 var config = require('./config')
 var db = require('./db')
 var github = require('./github')
+var utilities = require('./utilities')
 
 var dbConfig = config.dbConfig
 var discordConfig = config.discordConfig
@@ -93,18 +94,11 @@ client.on('message', msg => {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
                     github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
-                        score = 0.0;
-                        total = 0.0;
-                        reply = B;
-                        for (var grade of grades) {
-                            reply += grade + '\n';
-                            score += grade.score;
-                            total += grade.total;
-                        }
-                        reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-                        msg.author.send(reply)
-                            .then(_ => {msg.delete();})
-                            .catch(console.error);;
+                        utilities.calculateGrade(grades).then( (reply) => {
+                            msg.author.send(reply)
+                                .then(_ => {msg.delete();})
+                                .catch(console.error);
+                        })
                     })
                 })
             })
