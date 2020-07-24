@@ -3,6 +3,14 @@ const BB = B + B;
 
 module.exports = 
 {
+    buildHomeworkList: async function(assignments) {
+        var reply = '';
+        for (assignment of assignments) {
+            reply += assignment + '\n';
+        }
+        return reply;
+    },
+
     calculateGrade: async function(grades) {
         score = 0.0;
         total = 0.0;
@@ -13,6 +21,12 @@ module.exports =
             total += grade.total;
         }
         reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
+        return reply;
+    },
+
+    buildReposWithTopicList: async function(information, args) {
+        var reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`;
+        reply += information.join('\n');
         return reply;
     }
 }

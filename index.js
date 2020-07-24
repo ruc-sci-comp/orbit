@@ -80,17 +80,15 @@ client.on('message', msg => {
             }
             github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
-                    reply = '';
-                    for (assignment of assignments) {
-                        reply += assignment + '\n';
-                    }
-                    msg.channel.send(reply)
-                        .then(_ => {})
-                        .catch(console.error);
+                    utilities.buildHomeworkList(assignments).then( (reply) => {
+                        msg.channel.send(reply)
+                            .then(_ => {})
+                            .catch(console.error);
+                    })
                 })
             });
         }
-        if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
+        if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
                     github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
@@ -108,14 +106,13 @@ client.on('message', msg => {
                 msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
-            github.getReposWithTopics(token, githubConfig.organization, args)
-                .then(information => {
-                    reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
-                    reply += information.join('\n')
+            github.getReposWithTopics(token, githubConfig.organization, args).then(information => {
+                utilities.buildReposWithTopicList(information, args).then( (reply) => {
                     msg.channel.send(reply)
                         .then(_ => {})
                         .catch(console.error);
-                });
+                })
+            })
         }
     })
 });
