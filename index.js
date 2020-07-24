@@ -72,7 +72,7 @@ client.on('message', msg => {
 
     auth.getToken(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath).then( (token) => {
         if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
-            var assignmentType = parseAssignmentType(args);
+            var assignmentType = utilities.parseAssignmentType(args);
             github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
                     utilities.buildHomeworkList(assignments).then( (reply) => {
