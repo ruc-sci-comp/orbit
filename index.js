@@ -76,7 +76,7 @@ client.on('message', msg => {
                 assignmentType = 'current'
             }
             else {
-                assignmentType = assignmentType[0].trim().toLowerCase();
+                assignmentType = args[0].trim().toLowerCase();
             }
             github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
                 github.getAssignments(token, projectID, assignmentType).then((assignments) => {
@@ -88,7 +88,7 @@ client.on('message', msg => {
                 })
             });
         }
-        if (msg.content.startsWith('!grade') && msg.channel.name == 'grades') {
+        if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
                     github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
