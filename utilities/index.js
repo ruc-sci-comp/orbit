@@ -3,6 +3,15 @@ const BB = B + B;
 
 module.exports = 
 {
+    parseAssignmentType: function(args) {
+        if (args.length == 0) {
+            return 'current'
+        }
+        else {
+            return args[0].trim().toLowerCase();
+        }
+    },
+
     buildHomeworkList: async function(assignments) {
         var reply = '';
         for (assignment of assignments) {
