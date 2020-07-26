@@ -1,145 +1,203 @@
-const { Octokit } = require("@octokit/rest");
-
-module.exports = 
+module.exports =
 {
-    getHomeworkProject: async function(token, organization, assignmentProject) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-
-        const { data } = await octokit.projects.listForOrg({
-            org: organization
-        });
-
-        for (var project of data) {
-            if (project.name == assignmentProject) {
-                return project.id;
-            }
-        }
-    },
-
-    getAssignments: async function(token, projectID, assignmentType) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-
-        var { data } = await octokit.projects.listColumns({
-            project_id: projectID
-        });
-
-        for (column of data) {
-            if (column.name == assignmentType) {
-                var { data } = await octokit.projects.listCards({
-                    column_id: column.id
-                });
-                var assignments = [];
-                for (card of data) {
-                    assignments.push(card.note);
+    getProjectId: async function (graphqlWithAuth, organization, project) {
+        var query = `query ($o: String!, $p: String!) {
+            organization(login: $o) {
+              projects(search: $p, first: 1) {
+                nodes {
+                  id
                 }
-                return assignments;
+              }
             }
+          }`;
+        args = {
+            o: organization,
+            p: project
+        };
+        const result = await graphqlWithAuth(query, args);
+        if (result.organization.projects.nodes.length) {
+            return result.organization.projects.nodes[0].id;
         }
     },
 
-    getOrgRepos: async function(token, organization) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-        const { data } = await octokit.repos.listForOrg({
-            org: organization
-        });
-        orgRepositories = [];
-        for (var repo of data) {
-            orgRepositories.push(repo);
-        }
-        return orgRepositories;
-    },
-
-    getUserRepos: async function(token, organization, user) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
-        const { data } = await octokit.repos.listForOrg({
-            org: organization
-        });
-        userRepositories = [];
-        for (var repo of data) {
-            if (repo.name.endsWith(user)) {
-                userRepositories.push(repo);
+    getCards: async function (graphqlWithAuth, organization, project, column) {
+        var query = `query ($o: String!, $p: String!, $c1: String, $c2: String) {
+            organization(login: $o) {
+              projects(search: $p, first: 1) {
+                nodes {
+                  columns(first: 10, after: $c1) {
+                    nodes {
+                      name
+                      cards(first: 10, after: $c2) {
+                        nodes {
+                          note
+                        }
+                        pageInfo {
+                          hasNextPage
+                          endCursor
+                        }
+                      }
+                    }
+                    pageInfo {
+                      hasNextPage
+                      endCursor
+                    }
+                  }
+                }
+              }
             }
-        }
-        return userRepositories;
+          }`;
+        var cards = []
+        var columnCursor = null;
+        var cardCursor = null;
+        var hasNextColumnPage = false;
+        var hasNextCardPage = false;
+        do {
+            do {
+                args = {
+                    o: organization,
+                    p: project,
+                    c1: columnCursor,
+                    c2: cardCursor
+                };
+                const result = await graphqlWithAuth(query, args);
+                const proj = result.organization.projects.nodes[0]
+                const col = proj.columns.nodes.filter(c => c.name == column)[0]
+                cards = [...cards, ...col.cards.nodes]
+                if (hasNextCardPage = col.cards.pageInfo.hasNextPage) {
+                    cardCursor = col.cards.pageInfo.endCursor;
+                }
+                else {
+                    cardCursor = null;
+                    if (hasNextColumnPage = proj.columns.pageInfo.hasNextPage) {
+                        columnCursor = proj.columns.pageInfo.endCursor;
+                    }
+                    else {
+                        columnCursor = null;
+                    }
+                }
+            } while (hasNextCardPage);
+        } while (hasNextColumnPage);
+        return cards;
     },
 
-    getGrades: async function(token, user, repositories, gradeIssueTitle) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1'
-        });
+    getRepos: async function (graphqlWithAuth, organization) {
+        repos = []
+        for (topic of topics) {
+            var query = `query ($q: String!, $c: String) {
+                search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+                  nodes {
+                    ... on Repository {
+                      name
+                      url
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                }
+              }`;
+            var cursor = null;
+            var hasNextPage = false;
+            do {
+                args = {
+                    q: `org:${organization}`,
+                    c: cursor
+                };
+                const result = await graphqlWithAuth(query, args)
+                for (repo of result.search.nodes) {
+                    repos.push(new Repository(repo.name, repo.url));
+                }
+                if (result.search.pageInfo.hasNextPage) {
+                    cursor = result.search.pageInfo.endCursor
+                }
+            } while(hasNextPage)
+        }
+        return [...new Set(repos)];
+    },
+
+    getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
+        var query = `query ($q: String!, $l: String!, $c: String) {
+            search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+              nodes {
+                ... on Repository {
+                  name
+                  issues(filterBy: {labels: $l}, first: 1) {
+                    nodes {
+                      title
+                      body
+                    }
+                  }
+                }
+              }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
+            }
+          }`;
+
         grades = []
-        for (repository of repositories) {
-            const { data } = await octokit.issues.listForRepo({
-                owner: user,
-                repo: repository.name,
-                state: 'all'
-            });
-            for (var issue of data) {
-                if (issue.title == gradeIssueTitle) {
-                    var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
-                    grades.push(new Grade(repository.name, parseFloat(score), parseFloat(total)));
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                q: `org:${organization} ${user} in:name`,
+                l: label,
+                c: cursor
+            };
+            const result = await graphqlWithAuth(query, args)
+            for (var repository of result.search.nodes) {
+                if (!repository.issues.nodes.length) {
+                    continue;
                 }
+                const issue = repository.issues.nodes[0]
+                var [score, total] = issue.body.split('\n')[1].replace(/```/g, '').trim().split('/');
+                grades.push(new Grade(repository.name, parseFloat(score), parseFloat(total)));
             }
-        }
+            if (hasNextPage = result.search.pageInfo.hasNextPage) {
+                cursor = result.search.pageInfo.endCursor
+            }
+        } while (hasNextPage);
+
         return grades;
     },
 
-    getReposWithTopics: async function(token, organization, topics) {
-        const octokit = new Octokit({
-            auth: token,
-            userAgent: 'orbt v0.0.1',
-            previews: ["mercy-preview"]
-        });
-
-        // TODO this code we want, but it does not work
-        // https://github.com/octokit/rest.js/issues/1662
-        // const { data } = await octokit.teams.listReposInOrg({
-        //     org: organization,
-        //     team_slug: 'Students',
-        // });
-        // repos = [];
-        // for (var repo of data) {
-        //     for (repoTopic of repo.topics) {
-        //         if (topics.includes(repoTopic)) {
-        //             repos.push(repo.name);
-        //             break;
-        //         }
-        //     }
-        // }
-
-        const { data } = await octokit.repos.listForOrg({
-            org: organization,
-            headers: {
-                accept: 'application/vnd.github.+json'
-            },
-        });
-        repos = [];
-        for (var repo of data) {
-            // we only care about class repositories
-            if (!repo.name.startsWith('cpp-class-')) {
-                continue;
-            }
-            for (repoTopic of repo.topics) {
-                if (topics.includes(repoTopic)) {
-                    repos.push(new Repository(repo.name, repo.html_url));
-                    break;
+    getReposWithTopics: async function (graphqlWithAuth, organization, topics) {
+        repos = []
+        for (topic of topics) {
+            var query = `query ($q: String!, $c: String) {
+                search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+                  nodes {
+                    ... on Repository {
+                      name
+                      url
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
                 }
-            }
+              }`;
+            var cursor = null;
+            var hasNextPage = false;
+            do {
+                args = {
+                    q: `org:${organization} topic:${topic}`,
+                    c: cursor
+                };
+                const result = await graphqlWithAuth(query, args)
+                for (repo of result.search.nodes) {
+                    repos.push(new Repository(repo.name, repo.url));
+                }
+                if (result.search.pageInfo.hasNextPage) {
+                    cursor = result.search.pageInfo.endCursor
+                }
+            } while(hasNextPage)
         }
-        return repos;
+        return [...new Set(repos)];
     }
 }
 
@@ -158,10 +216,10 @@ class Grade {
 class Repository {
     constructor(r, u) {
         this.name = r;
-        this.html_url = u
+        this.url = u
     }
 
     toString() {
-        return `\`${this.name}:\` ${this.html_url}`
+        return `\`${this.name}:\` ${this.url}`
     }
 }
