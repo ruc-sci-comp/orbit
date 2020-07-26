@@ -10,6 +10,7 @@ async function main() {
     var orgRepositories = await github.getRepos(graphqlWithAuth, 'ruc-sci-comp')
     for (repo of orgRepositories) {
         console.log(repo)
+    }
 }
 
 main()
