@@ -72,29 +72,6 @@ client.on('message', msg => {
 
     auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
         if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
-<<<<<<< HEAD
-            var assignmentType = utilities.parseAssignmentType(args);
-            github.getHomeworkProject(token, githubConfig.organization, courseID).then((projectID) => {
-                github.getAssignments(token, projectID, assignmentType).then((assignments) => {
-                    utilities.buildHomeworkList(assignments).then( (reply) => {
-                        msg.channel.send(reply)
-                            .then(_ => {})
-                            .catch(console.error);
-                    })
-                })
-            });
-        }
-        if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
-            db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                github.getUserRepos(token, githubConfig.organization, githubUserName).then( (userRepositories) => {
-                    github.getGrades(token, githubConfig.organization, userRepositories, githubConfig.gradeIssueTitle).then( (grades) => {
-                        utilities.calculateGrade(grades).then( (reply) => {
-                            msg.author.send(reply)
-                                .then(_ => {msg.delete();})
-                                .catch(console.error);
-                        })
-                    })
-=======
             if (args.length == 0) {
                 assignmentType = 'current'
             }
@@ -127,7 +104,6 @@ client.on('message', msg => {
                     msg.author.send(reply)
                         .then(_ => {msg.delete();})
                         .catch(console.error);
->>>>>>> 40599da4aee0c4473795f714b1aa0ad8e906cd9a
                 })
             })
         }
@@ -136,15 +112,6 @@ client.on('message', msg => {
                 msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
-<<<<<<< HEAD
-            github.getReposWithTopics(token, githubConfig.organization, args).then(information => {
-                utilities.buildReposWithTopicList(information, args).then( (reply) => {
-                    msg.channel.send(reply)
-                        .then(_ => {})
-                        .catch(console.error);
-                })
-            })
-=======
             github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args)
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
@@ -153,7 +120,6 @@ client.on('message', msg => {
                         .then(_ => {})
                         .catch(console.error);
             });
->>>>>>> 40599da4aee0c4473795f714b1aa0ad8e906cd9a
         }
     })
 });
