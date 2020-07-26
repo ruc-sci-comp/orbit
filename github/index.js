@@ -83,37 +83,36 @@ module.exports =
 
     getRepos: async function (graphqlWithAuth, organization) {
         repos = []
-        for (topic of topics) {
-            var query = `query ($q: String!, $c: String) {
-                search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-                  nodes {
-                    ... on Repository {
-                      name
-                      url
-                    }
-                  }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
+        var query = `query ($q: String!, $c: String) {
+            search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+              nodes {
+                ... on Repository {
+                  name
+                  url
                 }
-              }`;
-            var cursor = null;
-            var hasNextPage = false;
-            do {
-                args = {
-                    q: `org:${organization}`,
-                    c: cursor
-                };
-                const result = await graphqlWithAuth(query, args)
-                for (repo of result.search.nodes) {
-                    repos.push(new Repository(repo.name, repo.url));
-                }
-                if (result.search.pageInfo.hasNextPage) {
-                    cursor = result.search.pageInfo.endCursor
-                }
-            } while(hasNextPage)
-        }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }`;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                q: `org:${organization}`,
+                c: cursor
+            };
+            const result = await graphqlWithAuth(query, args)
+            for (repo of result.search.nodes) {
+                repos.push(new Repository(repo.name, repo.url));
+            }
+            if (result.search.pageInfo.hasNextPage) {
+                cursor = result.search.pageInfo.endCursor
+            }
+        } while(hasNextPage)
+
         return [...new Set(repos)];
     },
 
