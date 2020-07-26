@@ -1,6 +1,7 @@
 var auth = require('../auth')
+var config = require('../config')
 var github = require('../github')
-
+var githubConfig = config.githubConfig
 
 async function main() {
     var token = await auth.getToken(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath)
