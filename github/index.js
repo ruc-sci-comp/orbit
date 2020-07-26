@@ -108,7 +108,7 @@ module.exports =
             for (repo of result.search.nodes) {
                 repos.push(new Repository(repo.name, repo.url));
             }
-            if (result.search.pageInfo.hasNextPage) {
+            if (hasNextPage = result.search.pageInfo.hasNextPage) {
                 cursor = result.search.pageInfo.endCursor
             }
         } while(hasNextPage)
@@ -191,7 +191,7 @@ module.exports =
                 for (repo of result.search.nodes) {
                     repos.push(new Repository(repo.name, repo.url));
                 }
-                if (result.search.pageInfo.hasNextPage) {
+                if (hasNextPage = result.search.pageInfo.hasNextPage) {
                     cursor = result.search.pageInfo.endCursor
                 }
             } while(hasNextPage)
