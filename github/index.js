@@ -43,6 +43,21 @@ module.exports =
         }
     },
 
+    getOrgRepos: async function(token, organization) {
+        const octokit = new Octokit({
+            auth: token,
+            userAgent: 'orbt v0.0.1'
+        });
+        const { data } = await octokit.repos.listForOrg({
+            org: organization
+        });
+        orgRepositories = [];
+        for (var repo of data) {
+            orgRepositories.push(repo);
+        }
+        return orgRepositories;
+    },
+
     getUserRepos: async function(token, organization, user) {
         const octokit = new Octokit({
             auth: token,
