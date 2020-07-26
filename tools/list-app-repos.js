@@ -9,7 +9,7 @@ async function main() {
     console.log(token)
     var orgRepositories = await github.getOrgRepos(token, 'ruc-sci-comp')
     for (repo of orgRepositories) {
-        console.log(repo)
+        console.log(repo.ssh_url)
     }
 }
 
