@@ -111,7 +111,7 @@ client.on('message', async msg => {
             }
             if (msg.content.startsWith('!grades')) {
                 db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                    github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed').then((cards) => {
+                    github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed').then(async (cards) => {
                         score = 0.0;
                         total = 0.0;
                         reply = B;
