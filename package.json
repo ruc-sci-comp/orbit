@@ -17,9 +17,9 @@
   },
   "homepage": "https://github.com/Lnk2past/orbit",
   "dependencies": {
-    "@octokit/auth-app": "^2.4.4",
+    "@octokit/auth-app": "^2.4.11",
     "@octokit/graphql": "^4.3.1",
-    "discord.js": "^12.1.1",
+    "discord.js": "^12.2.0",
     "npm": "^6.14.6",
     "pg": "^7.18.2"
   }
