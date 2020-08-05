@@ -122,7 +122,7 @@ client.on('message', msg => {
                     }
                     reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
                     send_dm(msg, reply)
-                        .then(_ => {msg.delete();})
+                        .then(_ => {if (msg.type == 'text') { msg.delete();} })
                         .catch(console.error);
                 })
             })
