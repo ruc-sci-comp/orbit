@@ -26,24 +26,24 @@ var guild = undefined;
 
 const client = new Discord.Client();
 
-function send_text(msg, content) {
+async function send_text(msg, content) {
     if (msg.channel.type == 'text') {
-        msg.author.send(content);
+        return msg.author.send(content);
     }
 }
 
-function send_dm(msg, content) {
+async function send_dm(msg, content) {
     if (msg.channel.type == 'dm') {
-        msg.author.send(content);
+        return msg.author.send(content);
     }
 }
 
-function send_message(msg, content) {
+async function send_message(msg, content) {
     if (msg.channel.type == 'dm') {
-        send_dm(msg, content);
+        return send_dm(msg, content);
     }
     else {
-        send_text(msg, content);
+        return send_text(msg, content);
     }
 }
 
