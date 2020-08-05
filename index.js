@@ -62,13 +62,12 @@ function prepareChannels(channels) {
         createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
     })
 
-    for (course of githubConfig.courses) {
-        createChannel(channels, course, 'category').then( (courseID) => {
-            createChannel(channels, course + '-general', 'text', courseID);
-            createChannel(channels, 'assignments', 'text', courseID);
-            createChannel(channels, 'grades', 'text', courseID);
-        });
-    }
+    createChannel(channels, githubConfig.course, 'category').then( (courseID) => {
+        createChannel(channels, githubConfig.course + '-general', 'text', courseID);
+        createChannel(channels, 'assignments', 'text', courseID);
+        createChannel(channels, 'grades', 'text', courseID);
+    });
+
 }
 
 client.on('ready', () => {
@@ -91,8 +90,6 @@ client.on('message', msg => {
         return;
     }
 
-    var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
-
     auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
         if (msg.content.startsWith('!assignments')) {
             if (args.length == 0) {
@@ -102,7 +99,7 @@ client.on('message', msg => {
                 assignmentType = assignmentType[0].trim().toLowerCase();
             }
 
-            github.getCards(graphqlWithAuth, githubConfig.organization, courseID, assignmentType).then((cards) => {
+            github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType).then((cards) => {
                 reply = '';
                 for (card of cards) {
                     reply += card.note + '\n';
