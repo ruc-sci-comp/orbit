@@ -86,78 +86,73 @@ client.on('message', async msg => {
         return;
     }
 
-    auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
-        auth.getRestWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath).then( (restWithAuth) => {
-            if (msg.content.startsWith('!assignments')) {
-                if (args.length == 0) {
-                    assignmentType = 'current';
-                }
-                else {
-                    assignmentType = assignmentType[0].trim().toLowerCase();
-                    if (assignmentType == 'unreleased') {
-                        assignmentType = 'current';
+    var graphqlWithAuth = await auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath);
+    var restWithAuth = await auth.getRestWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath);
+
+    if (msg.content.startsWith('!assignments')) {
+        if (args.length == 0) {
+            assignmentType = 'current';
+        }
+        else {
+            assignmentType = assignmentType[0].trim().toLowerCase();
+            if (assignmentType == 'unreleased') {
+                assignmentType = 'current';
+            }
+        }
+
+        var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType)
+            reply = '';
+            for (card of cards) {
+                reply += card.note + '\n';
+            }
+            send_dm(msg, reply)
+                .then(_ => {})
+                .catch(console.error);
+    }
+    if (msg.content.startsWith('!grades')) {
+        var githubUserName = await db.getGitHubUserName(pool, msg.author.id);
+        var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed')
+        score = 0.0;
+        total = 0.0;
+        reply = B;
+
+        for (var card of cards) {
+            var c = JSON.parse(card);
+            var repo = c.name + '-' + githubUserName
+            var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo);
+            var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
+            reply += c.name + ': ' + raw_grade
+            score += grade.score * githubConfig.gradeWeights[c.category];
+            total += grade.total * githubConfig.gradeWeights[c.category];
+        }
+
+        if (total > 0) {
+            reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
+            send_dm(msg, reply)
+                .then(_ => {
+                    if (msg.channel.type == 'text') {
+                        msg.delete();
                     }
-                }
-
-                github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType).then((cards) => {
-                    reply = '';
-                    for (card of cards) {
-                        reply += card.note + '\n';
-                    }
-                    send_dm(msg, reply)
-                        .then(_ => {})
-                        .catch(console.error);
                 })
-            }
-            if (msg.content.startsWith('!grades')) {
-                db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                    github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed').then((cards) => {
-                        score = 0.0;
-                        total = 0.0;
-                        reply = B;
+                .catch(console.error);
+        }
+        else {
+            send_dm(msg, "No assignments have been released for grading!")
+        }
+    }
 
-                        for (var card of cards) {
-                            var c = JSON.parse(card);
-                            var repo = c.name + '-' + githubUserName
-                            var raw_grade = github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo);
-                            var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
-                            reply += c.name + ': ' + raw_grade
-                            score += grade.score * githubConfig.gradeWeights[c.category];
-                            total += grade.total * githubConfig.gradeWeights[c.category];
-                        }
-
-                        if (total > 0) {
-                            reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-                            send_dm(msg, reply)
-                                .then(_ => {
-                                    if (msg.channel.type == 'text') {
-                                        msg.delete();
-                                    }
-                                })
-                                .catch(console.error);
-                        }
-                        else {
-                            send_dm(msg, "No assignments have been released for grading!")
-                        }
-                    })
-                })
-            }
-            if (msg.content.startsWith('!info')) {
-                if (args.length == 0) {
-                    send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
-                    return;
-                }
-                github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args)
-                    .then(information => {
-                        reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
-                        reply += information.join('\n')
-                        send_message(msg, reply)
-                            .then(_ => {})
-                            .catch(console.error);
-                });
-            }
-        })
-    });
+    if (msg.content.startsWith('!info')) {
+        if (args.length == 0) {
+            send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
+            return;
+        }
+        var information = await github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args);
+        reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
+        reply += information.join('\n')
+        send_message(msg, reply)
+            .then(_ => {})
+            .catch(console.error);
+    }
 });
 
 client.login(discordConfig.token);
