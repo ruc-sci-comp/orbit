@@ -111,24 +111,19 @@ client.on('message', async msg => {
             }
             if (msg.content.startsWith('!grades')) {
                 db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
-                    github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed').then(async (cards) => {
+                    github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed').then((cards) => {
                         score = 0.0;
                         total = 0.0;
                         reply = B;
 
-                        try {
-                            for (var card of cards) {
-                                var c = JSON.parse(card);
-                                var repo = c.name + '-' + githubUserName
-                                var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo)
-                                var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
-                                reply += c.name + ': ' + raw_grade
-                                score += grade.score * githubConfig.gradeWeights[c.category];
-                                total += grade.total * githubConfig.gradeWeights[c.category];
-                            }
-                        }
-                        catch (error) {
-                            return;
+                        for (var card of cards) {
+                            var c = JSON.parse(card);
+                            var repo = c.name + '-' + githubUserName
+                            var raw_grade = github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo);
+                            var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
+                            reply += c.name + ': ' + raw_grade
+                            score += grade.score * githubConfig.gradeWeights[c.category];
+                            total += grade.total * githubConfig.gradeWeights[c.category];
                         }
 
                         if (total > 0) {
@@ -161,7 +156,8 @@ client.on('message', async msg => {
                             .catch(console.error);
                 });
             }
-    })
+        })
+    });
 });
 
 client.login(discordConfig.token);
