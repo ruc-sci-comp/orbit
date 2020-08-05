@@ -26,16 +26,28 @@ var guild = undefined;
 
 const client = new Discord.Client();
 
-function send_reply(msg, message) {
-    if (msg.channel.type == 'dm') {
-        msg.author.send(message);
-    }
-    else {
-        msg.channel.send(message);
+function send_text(msg, content) {
+    if (msg.channel.type == 'text') {
+        msg.author.send(content);
     }
 }
 
-createChannel = async function(channels, name, type, parent=undefined) {
+function send_dm(msg, content) {
+    if (msg.channel.type == 'dm') {
+        msg.author.send(content);
+    }
+}
+
+function send_message(msg, content) {
+    if (msg.channel.type == 'dm') {
+        send_dm(msg, content);
+    }
+    else {
+        send_text(msg, content);
+    }
+}
+
+async function createChannel(channels, name, type, parent=undefined) {
     for (var channel of channels.cache.values()) {
         if (channel.name == name && channel.type == type) {
             return channel.id;
@@ -44,7 +56,7 @@ createChannel = async function(channels, name, type, parent=undefined) {
     return (await guild.channels.create(name, {type: type, parent: parent})).id
 }
 
-prepareChannels = function(channels) {
+function prepareChannels(channels) {
     createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
         createChannel(channels, 'sandbox', 'text', orbitCategoryID);
         createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
@@ -66,11 +78,10 @@ client.on('ready', () => {
 })
 
 client.on('message', msg => {
-    var send = undefined;
-
 
     if (msg.content === 'ping') {
-        send_reply(msg, 'pong');
+        send_message(msg, 'pong!');
+        return;
     }
 
     var [command, ...args] = msg.content.split(' ');
@@ -83,7 +94,7 @@ client.on('message', msg => {
     var courseID = guild.channels.cache.get(msg.channel.id).parent.name;
 
     auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
-        if (msg.content.startsWith('!assignments') && msg.channel.name == 'assignments') {
+        if (msg.content.startsWith('!assignments')) {
             if (args.length == 0) {
                 assignmentType = 'current'
             }
@@ -96,12 +107,12 @@ client.on('message', msg => {
                 for (card of cards) {
                     reply += card.note + '\n';
                 }
-                send_reply(msg, reply)
+                send_dm(msg, reply)
                     .then(_ => {})
                     .catch(console.error);
             })
         }
-        if (msg.content.startsWith('!grades') && msg.channel.name == 'grades') {
+        if (msg.content.startsWith('!grades')) {
             db.getGitHubUserName(pool, msg.author.id).then( (githubUserName) => {
                 github.getGradeIssuesForUser(graphqlWithAuth, githubConfig.organization, githubUserName, 'grade').then( (grades) => {
                     score = 0.0;
@@ -113,7 +124,7 @@ client.on('message', msg => {
                         total += grade.total;
                     }
                     reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-                    msg.author.send_reply(msg, reply)
+                    send_dm(msg, reply)
                         .then(_ => {msg.delete();})
                         .catch(console.error);
                 })
@@ -121,14 +132,14 @@ client.on('message', msg => {
         }
         if (msg.content.startsWith('!info')) {
             if (args.length == 0) {
-                send_reply(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
+                send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
             github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args)
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
                     reply += information.join('\n')
-                    send_reply(msg, reply)
+                    send_message(msg, reply)
                         .then(_ => {})
                         .catch(console.error);
             });
