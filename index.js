@@ -116,14 +116,19 @@ client.on('message', msg => {
                         total = 0.0;
                         reply = B;
 
-                        for (var card of cards) {
-                            var c = JSON.parse(card);
-                            var repo = c.name + '-' + githubUserName
-                            var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo)
-                            var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
-                            reply += c.name + ': ' + raw_grade
-                            score += grade.score * githubConfig.gradeWeights[c.category];
-                            total += grade.total * githubConfig.gradeWeights[c.category];
+                        try {
+                            for (var card of cards) {
+                                var c = JSON.parse(card);
+                                var repo = c.name + '-' + githubUserName
+                                var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo)
+                                var [score, total] = raw_grade.replace(/```/g, '').trim().split('/');
+                                reply += c.name + ': ' + raw_grade
+                                score += grade.score * githubConfig.gradeWeights[c.category];
+                                total += grade.total * githubConfig.gradeWeights[c.category];
+                            }
+                        }
+                        catch {
+                            return;
                         }
 
                         if (total > 0) {
