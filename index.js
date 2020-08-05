@@ -26,15 +26,15 @@ var guild = undefined;
 
 const client = new Discord.Client();
 
-async function send_text(msg, content) {
-    if (msg.channel.type == 'text') {
+async function send_dm(msg, content) {
+    if (msg.channel.type == 'dm') {
         return msg.author.send(content);
     }
 }
 
-async function send_dm(msg, content) {
-    if (msg.channel.type == 'dm') {
-        return msg.author.send(content);
+async function send_text(msg, content) {
+    if (msg.channel.type == 'text') {
+        return msg.channel.send(content);
     }
 }
 
