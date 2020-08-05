@@ -57,8 +57,18 @@ client.on('ready', () => {
 })
 
 client.on('message', msg => {
+    var send = undefined;
+
+    if (msg.channel.type == "dm") {
+        send = msg.author.send;
+    }
+    else {
+        send = msg.channel.send;
+    }
+
+
     if (msg.content === 'ping') {
-        msg.channel.send('pong');
+        send('pong');
     }
 
     var [command, ...args] = msg.content.split(' ');
@@ -84,7 +94,7 @@ client.on('message', msg => {
                 for (card of cards) {
                     reply += card.note + '\n';
                 }
-                msg.channel.send(reply)
+                send(reply)
                     .then(_ => {})
                     .catch(console.error);
             })
@@ -109,14 +119,14 @@ client.on('message', msg => {
         }
         if (msg.content.startsWith('!info')) {
             if (args.length == 0) {
-                msg.channel.send('I need more information! Provide some keywords and I will find some repositories that match!');
+                send('I need more information! Provide some keywords and I will find some repositories that match!');
                 return;
             }
             github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args)
                 .then(information => {
                     reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
                     reply += information.join('\n')
-                    msg.channel.send(reply)
+                    send(reply)
                         .then(_ => {})
                         .catch(console.error);
             });
