@@ -120,9 +120,8 @@ client.on('message', async msg => {
             var c = JSON.parse(card.note);
             var repo = c.name + '-' + githubUserName
             var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo);
-            console.log(raw_grade)
-            var [grade_score, grade_total] = raw_grade.replace(/```/g, '').trim().split('/');
-            reply += c.name + ': ' + raw_grade
+            var [grade_score, grade_total] = raw_grade.split(' ')[1].trim().split('/');
+            reply += c.name + ': ' + raw_grade + '\n';
             score += grade_score * githubConfig.gradeWeights[c.category];
             total += grade_total * githubConfig.gradeWeights[c.category];
         }
