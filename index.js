@@ -127,7 +127,7 @@ client.on('message', msg => {
                                 total += grade.total * githubConfig.gradeWeights[c.category];
                             }
                         }
-                        catch {
+                        catch (error) {
                             return;
                         }
 
