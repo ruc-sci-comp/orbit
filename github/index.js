@@ -205,7 +205,7 @@ module.exports =
           repo: repo,
           ref: 'master'
       })
-      return result.data.check_runs[0]
+      return result.data.check_runs[0].output.text;
     }
 }
 
