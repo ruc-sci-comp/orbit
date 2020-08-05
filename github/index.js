@@ -197,6 +197,15 @@ module.exports =
             } while(hasNextPage)
         }
         return [...new Set(repos)];
+    },
+
+    getActionAnnotation: async function (restWithAuth, owner, repo) {
+      var result = await restWithAuth.checks.listForRef({
+          owner: owner,
+          repo: repo,
+          ref: 'master'
+      })
+      return result.data.check_runs[0]
     }
 }
 
