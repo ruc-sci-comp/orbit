@@ -72,7 +72,7 @@ client.on('ready', () => {
     prepareChannels(guild.channels);
 })
 
-client.on('message', msg => {
+client.on('message', async msg => {
 
     if (msg.content === 'ping') {
         send_message(msg, 'pong!');
