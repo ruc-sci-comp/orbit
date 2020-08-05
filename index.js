@@ -89,10 +89,13 @@ client.on('message', msg => {
     auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath).then( (graphqlWithAuth) => {
         if (msg.content.startsWith('!assignments')) {
             if (args.length == 0) {
-                assignmentType = 'current'
+                assignmentType = 'current';
             }
             else {
                 assignmentType = assignmentType[0].trim().toLowerCase();
+                if (assignmentType == 'unreleased') {
+                    assignmentType = 'current';
+                }
             }
 
             github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType).then((cards) => {
@@ -118,7 +121,11 @@ client.on('message', msg => {
                     }
                     reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
                     send_dm(msg, reply)
-                        .then(_ => {if (msg.type == 'text') { msg.delete();} })
+                        .then(_ => {
+                            if (msg.channel.type == 'text') {
+                                msg.delete();
+                            }
+                        })
                         .catch(console.error);
                 })
             })
