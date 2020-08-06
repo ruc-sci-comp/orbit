@@ -74,7 +74,7 @@ client.on('ready', () => {
 
 client.on('message', async msg => {
 
-    if (msg.content === 'ping') {
+    if (msg.content === '!ping') {
         send_message(msg, 'pong!');
         return;
     }
@@ -127,7 +127,7 @@ client.on('message', async msg => {
         }
 
         if (total > 0) {
-            reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
+            reply += `${BB}Weighted Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
             send_dm(msg, reply)
                 .then(_ => {
                     if (msg.channel.type == 'text') {
