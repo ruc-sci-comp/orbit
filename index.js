@@ -182,8 +182,9 @@ client.on('message', async msg => {
                         dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\`Name: ${name.first().content}\`\n\`GitHub: ${githubUserName.first().content}\``).then(() => {
                             dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(confirmation => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
-                                    var newUser = await db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content);
-                                    dmChannel.send(`Registered new user: ${newUser}`)
+                                    db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( newUser => {
+                                        dmChannel.send(`Registered new user: ${newUser}`)
+                                    })
                                 }
                             })
                         })
