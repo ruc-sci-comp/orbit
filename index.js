@@ -172,8 +172,8 @@ client.on('message', async msg => {
                     if (confirmation == 'yes') {
                         db.registerUser(name, githubUserName, msg.author.id);
                     }
-                }
-            }
+                })
+            })
         })
     }
 });
