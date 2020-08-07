@@ -163,18 +163,19 @@ client.on('message', async msg => {
 
     if (msg.content.startsWith('!register')) {
         var dmChannel = await msg.author.createDM();
+        
         dmChannel.send('Enter your full name (First Last)');
-        dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] }).then(name => {
-            dmChannel.send('Enter your GitHub Username');
-            dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] }).then(githubUserName => {
-                dmChannel.send('Are you sure you want to proceed? This cannot be undone! [yes/no]');
-                dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] }).then(confirmation => {
-                    if (confirmation == 'yes') {
-                        db.registerUser(name, githubUserName, msg.author.id);
-                    }
-                })
-            })
-        })
+        var name = await dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] })
+
+        dmChannel.send('Enter your GitHub Username');
+        var githubUserName = await dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] })
+
+        dmChannel.send('Are you sure you want to proceed? This cannot be undone! [yes/no]');
+        var confirmation = await dmChannel.awaitMessages({ max: 1, time: 10000, errors: ['time'] })
+
+        if (confirmation == 'yes') {
+            db.registerUser(name, githubUserName, msg.author.id);
+        }
     }
 });
 
