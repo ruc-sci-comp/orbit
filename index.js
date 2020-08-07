@@ -183,7 +183,7 @@ client.on('message', async msg => {
                             dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(confirmation => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( newUser => {
-                                        dmChannel.send(`Registered new user: ${newUser}`)
+                                        dmChannel.send(`Registered!`)
                                     })
                                 }
                             })

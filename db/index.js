@@ -2,7 +2,7 @@ module.exports =
 {
     registerUser: async function(pool, name, discordID, githubUserName) {
         var res = await pool.query(`INSERT INTO students(name, discord_id, github_username) VALUES( '${name}', '${discordID}', '${githubUserName}');`);
-        return res.rows[0];
+        return res;
     },
 
     getGitHubUserName: async function(pool, discordID) {
