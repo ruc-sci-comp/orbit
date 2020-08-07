@@ -57,13 +57,6 @@ function prepareChannels(channels) {
         createChannel(channels, 'sandbox', 'text', orbitCategoryID);
         createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
     })
-
-    createChannel(channels, githubConfig.course, 'category').then( (courseID) => {
-        createChannel(channels, githubConfig.course + '-general', 'text', courseID);
-        createChannel(channels, 'assignments', 'text', courseID);
-        createChannel(channels, 'grades', 'text', courseID);
-    });
-
 }
 
 client.on('ready', () => {
@@ -185,6 +178,9 @@ client.on('message', async msg => {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
                                         if (rowCount == 1) {
                                             dmChannel.send(`Registered!`)
+                                            createChannel(channels, 'cpp', 'category').then( (cppCategoryID) => {
+                                                createChannel(channels, githubUserName.first(), 'text', cppCategoryID);
+                                            })
                                         }
                                         else {
                                             dmChannel.send('`Something went wrong while trying to register! Contact your instructor!`');
