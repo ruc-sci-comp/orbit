@@ -164,13 +164,14 @@ client.on('message', async msg => {
     if (msg.content.startsWith('!register')) {
         var dmChannel = await msg.author.createDM();
         var filter = m => m.content.length != 0;
+        var count = await db.countUser(pool, msg.author.id);
 
-        dmChannel.send('Enter your full name (First Last)').then(() => {
-            dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(name => {
-                dmChannel.send('Enter your GitHub Username').then(() => {
-                    dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(githubUserName => {
+        dmChannel.send('Enter your full name (First Last) / [or cancel to quit]').then(() => {
+            dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(name => {
+                dmChannel.send('Enter your GitHub Username / [or cancel to quite]').then(() => {
+                    dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(githubUserName => {
                         dmChannel.send('Are you sure you want to proceed? This cannot be undone! [yes/no]').then(() => {
-                            dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(confirmation => {
+                            dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(confirmation => {
                                 if (confirmation.first().content === 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content);
                                 }
