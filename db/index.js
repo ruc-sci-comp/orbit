@@ -12,6 +12,6 @@ module.exports =
 
     countUser: async function(pool, discordID) {
         var res = await pool.query(`SELECT COUNT(*) FROM students WHERE discord_id='${discordID}';`);
-        return res.rows[0];
+        return res.rows[0].count;
     }
 }
