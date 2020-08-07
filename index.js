@@ -166,23 +166,24 @@ client.on('message', async msg => {
         var filter = m => m.content.length != 0;
         var count = await db.countUser(pool, msg.author.id);
         if (count > 0) {
-            dmChannel.send('This Discord account is already registered! Contact your instructor.')
+            dmChannel.send('`This Discord account is already registered! Contact your instructor.`')
             return;
         }
-        dmChannel.send('Enter your full name (First Last) / [or cancel to quit]').then(() => {
+        dmChannel.send('`Enter your full name (First Last) / [or cancel to quit]`').then(() => {
             dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(name => {
                 if (name.first().content.toLowerCase() == 'cancel') {
                     return;
                 }
-                dmChannel.send('Enter your GitHub Username / [or cancel to quite]').then(() => {
+                dmChannel.send('`Enter your GitHub Username / [or cancel to quite]`').then(() => {
                     dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(githubUserName => {
                         if (githubUserName.first().content.toLowerCase() == 'cancel') {
                             return;
                         }
-                        dmChannel.send(`Are you sure you want to proceed? This cannot be undone! [yes/no]\n\`Name: ${name.first().content}\`\n\`GitHub: ${githubUserName.first().content}\``).then(() => {
+                        dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\`Name: ${name.first().content}\`\n\`GitHub: ${githubUserName.first().content}\``).then(() => {
                             dmChannel.awaitMessages(filter, { max: 1, time: 20000, errors: ['time'] }).then(confirmation => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
-                                    db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content);
+                                    var newUser = await db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content);
+                                    dmChannel.send(`Registered new user: ${newUser}`)
                                 }
                             })
                         })
