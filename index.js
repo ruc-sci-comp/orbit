@@ -165,14 +165,14 @@ client.on('message', async msg => {
         var dmChannel = await msg.author.createDM();
         var filter = m => m.content.length != 0;
 
-        dmChannel.send('Enter your full name (First Last)'),then(() => {
+        dmChannel.send('Enter your full name (First Last)').then(() => {
             dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(name => {
                 dmChannel.send('Enter your GitHub Username').then(() => {
                     dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(githubUserName => {
                         dmChannel.send('Are you sure you want to proceed? This cannot be undone! [yes/no]').then(() => {
                             dmChannel.awaitMessages(filter, { max: 1, time: 10000, errors: ['time'] }).then(confirmation => {
-                                if (confirmation == 'yes') {
-                                    db.registerUser(name, githubUserName, msg.author.id);
+                                if (confirmation.content === 'yes') {
+                                    db.registerUser(name.content, githubUserName.content, msg.author.id);
                                 }
                             })
                         })
