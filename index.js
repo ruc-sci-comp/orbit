@@ -127,8 +127,10 @@ client.on('message', async msg => {
             }
             var [grade_score, grade_total] = raw_grade.split(' ')[1].trim().split('/');
             reply += c.name + ': ' + grade_score.padStart(3, ' ') + '/' + grade_total.padStart(3, ' ') + '\n';
-            score += grade_score * githubConfig.gradeWeights[c.category];
-            total += grade_total * githubConfig.gradeWeights[c.category];
+            if (c.points > 0) {
+                score += grade_score * githubConfig.gradeWeights[c.category];
+                total += grade_total * githubConfig.gradeWeights[c.category];
+            }
         }
 
         if (total > 0) {
