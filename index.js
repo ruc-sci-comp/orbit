@@ -43,26 +43,14 @@ async function send_message(msg, content) {
     }
 }
 
-async function createChannel(channels, name, type, parent=undefined) {
-    for (var channel of channels.cache.values()) {
-        if (channel.name == name && channel.type == type) {
-            return channel.id;
-        }
-    }
-    return (await guild.channels.create(name, {type: type, parent: parent})).id
-}
-
-function prepareChannels(channels) {
-    createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
-        createChannel(channels, 'sandbox', 'text', orbitCategoryID);
-        createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
-    })
-}
-
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     guild = client.guilds.cache.values().next().value;
-    prepareChannels(guild.channels);
+    guild.channels.create('orbit', {type: 'category'}).then( (orbitCategory) => {
+        guild.channels.create('sandbox', {type: 'text', parent: orbitCategory})
+        guild.channels.create('orbit-comms', {type: 'text', parent: orbitCategory})
+    })
+
 })
 
 client.on('message', async msg => {
@@ -177,10 +165,9 @@ client.on('message', async msg => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
                                         if (rowCount == 1) {
+                                            let studentRole = msg.guild.roles.find(role => role.name === "Student");
+                                            msg.author.addRole(studentRole).catch(console.error);
                                             dmChannel.send(`Registered!`)
-                                            createChannel(channels, 'cpp', 'category').then( (cppCategoryID) => {
-                                                createChannel(channels, githubUserName.first(), 'text', cppCategoryID);
-                                            })
                                         }
                                         else {
                                             dmChannel.send('`Something went wrong while trying to register! Contact your instructor!`');
