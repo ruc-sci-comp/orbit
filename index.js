@@ -58,8 +58,9 @@ prepareChannels = function(channels) {
         createChannel(channels, 'assignments', 'text', textChannels);
     });
 
-    createChannel(channels, githubConfig.course + 'Voice Channels', 'category').then( (voiceChannels) => {
+    createChannel(channels, githubConfig.course + ' Voice Channels', 'category').then( (voiceChannels) => {
         createChannel(channels, 'general-voice', 'voice', voiceChannels);
+        createChannel(channels, 'virtual-classroom', 'voice', voiceChannels);
     });
 
     createChannel(channels, 'orbit', 'category').then( (orbitChannels) => {
