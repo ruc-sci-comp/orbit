@@ -53,15 +53,19 @@ createChannel = async function(channels, name, type, parent=undefined) {
 }
 
 prepareChannels = function(channels) {
-    createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
-        createChannel(channels, 'sandbox', 'text', orbitCategoryID);
-        createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
-    })
-
-    createChannel(channels, githubConfig.course, 'category').then( (courseID) => {
-        createChannel(channels, 'general', 'text', courseID);
-        createChannel(channels, 'assignments', 'text', courseID);
+    createChannel(channels, githubConfig.course, 'category').then( (textChannels) => {
+        createChannel(channels, 'general', 'text', textChannels);
+        createChannel(channels, 'assignments', 'text', textChannels);
     });
+
+    createChannel(channels, githubConfig.course + 'Voice Channels', 'category').then( (voiceChannels) => {
+        createChannel(channels, 'general-voice', 'voice', voiceChannels);
+    });
+
+    createChannel(channels, 'orbit', 'category').then( (orbitChannels) => {
+        createChannel(channels, 'sandbox', 'text', orbitChannels);
+        createChannel(channels, 'orbit-comms', 'text', orbitChannels);
+    })
 }
 
 client.on('ready', () => {
