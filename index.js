@@ -59,7 +59,7 @@ prepareChannels = function(channels) {
     })
 
     createChannel(channels, githubConfig.course, 'category').then( (courseID) => {
-        createChannel(channels, githubConfig.course + '-general', 'text', courseID);
+        createChannel(channels, 'general', 'text', courseID);
         createChannel(channels, 'assignments', 'text', courseID);
     });
 }
