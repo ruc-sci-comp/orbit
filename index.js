@@ -184,7 +184,7 @@ client.on('message', async msg => {
     if (msg.content.startsWith('!register')) {
         var dmChannel = await msg.author.createDM();
         var filter = m => m.content.length != 0;
-        var messageAwaitObject = { max: 1, time: timeout, errors: ['time'] };
+        var messageAwaitObject = { max: 1, time: 30000, errors: ['time'] };
         var count = await db.countUser(pool, msg.author.id);
         if (count > 0) {
             dmChannel.send('`This Discord account is already registered! Contact your instructor.`')
