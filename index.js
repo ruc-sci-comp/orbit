@@ -43,14 +43,32 @@ async function send_message(msg, content) {
     }
 }
 
+createChannel = async function(channels, name, type, parent=undefined) {
+    for (var channel of channels.cache.values()) {
+        if (channel.name == name && channel.type == type) {
+            return channel.id;
+        }
+    }
+    return (await guild.channels.create(name, {type: type, parent: parent})).id
+}
+
+prepareChannels = function(channels) {
+    createChannel(channels, 'orbit', 'category').then( (orbitCategoryID) => {
+        createChannel(channels, 'sandbox', 'text', orbitCategoryID);
+        createChannel(channels, 'orbit-comms', 'text', orbitCategoryID);
+    })
+
+    createChannel(channels, githubConfig.course, 'category').then( (courseID) => {
+        createChannel(channels, course + '-general', 'text', courseID);
+        createChannel(channels, 'assignments', 'text', courseID);
+        createChannel(channels, 'grades', 'text', courseID);
+    });
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     guild = client.guilds.cache.values().next().value;
-    guild.channels.create('orbit', {type: 'category'}).then( (orbitCategory) => {
-        guild.channels.create('sandbox', {type: 'text', parent: orbitCategory})
-        guild.channels.create('orbit-comms', {type: 'text', parent: orbitCategory})
-    })
-
+    prepareChannels(guild.channels);
 })
 
 client.on('message', async msg => {
@@ -165,8 +183,9 @@ client.on('message', async msg => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
                                         if (rowCount == 1) {
-                                            let studentRole = msg.guild.roles.find(role => role.name === "Student");
-                                            msg.author.addRole(studentRole).catch(console.error);
+                                            let studentRole = guild.roles.cache.find(role => role.name === "Student");
+                                            let member = guild.members.cache.find(member => member.id === msg.author.id)
+                                            member.roles.add(studentRole).catch(console.error);
                                             dmChannel.send(`Registered!`)
                                         }
                                         else {
