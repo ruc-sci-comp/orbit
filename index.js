@@ -49,7 +49,24 @@ createChannel = async function(channels, name, type, parent=undefined) {
             return channel.id;
         }
     }
-    return (await guild.channels.create(name, {type: type, parent: parent})).id
+    var new_channel = await guild.channels.create(
+        name,
+        {
+            type: type,
+            parent: parent,
+            permissionOverwrites: [
+                {
+                    id: guild.roles.everyone,
+                    deny: ['VIEW_CHANNEL'],
+                },
+                {
+                    id: guild.roles.cache.find(role => role.name === "Student").id,
+                    allow: ['VIEW_CHANNEL'],
+                },
+            ],
+        }
+    )
+    return new_channel.id
 }
 
 prepareChannels = function(channels) {
