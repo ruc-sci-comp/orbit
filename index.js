@@ -191,17 +191,17 @@ client.on('message', async msg => {
             return;
         }
         dmChannel.send('`Enter your full name (First Last) / [or cancel to quit]`').then(() => {
-            dmChannel.awaitMessages(filter, messageAwaitConfig).then(name => {
+            dmChannel.awaitMessages(filter, messageAwaitObject).then(name => {
                 if (name.first().content.toLowerCase() == 'cancel') {
                     return;
                 }
                 dmChannel.send('`Enter your GitHub Username / [or cancel to quite]`').then(() => {
-                    dmChannel.awaitMessages(filter, messageAwaitConfig).then(githubUserName => {
+                    dmChannel.awaitMessages(filter, messageAwaitObject).then(githubUserName => {
                         if (githubUserName.first().content.toLowerCase() == 'cancel') {
                             return;
                         }
                         dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\`Name: ${name.first().content}\`\n\`GitHub: ${githubUserName.first().content}\``).then(() => {
-                            dmChannel.awaitMessages(filter, messageAwaitConfig).then(confirmation => {
+                            dmChannel.awaitMessages(filter, messageAwaitObject).then(confirmation => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
                                         if (rowCount == 1) {
