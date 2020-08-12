@@ -50,7 +50,7 @@ module.exports =
         return cards;
     },
 
-    getRepos: async function (graphqlWithAuth, organization, topic=undefined) {
+    getRepos: async function (graphqlWithAuth, organization) {
         repos = []
         var query = queries.getReposQuery;
         var cursor = null;
@@ -60,10 +60,6 @@ module.exports =
                 q: `org:${organization}`,
                 c: cursor
             };
-            if (topics !== undefined) {
-                args.q += 
-            }
-
             const result = await graphqlWithAuth(query, args)
             for (repo of result.search.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
