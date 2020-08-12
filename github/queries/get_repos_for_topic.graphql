@@ -4,6 +4,13 @@ query ($q: String!, $c: String) {
             ... on Repository {
                 name
                 url
+                repositoryTopics(first: 10) {
+                    nodes {
+                        topic {
+                        name
+                        }
+                    }
+                }
             }
         }
         pageInfo {
