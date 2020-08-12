@@ -26,76 +26,30 @@ var guild = undefined;
 
 const client = new Discord.Client();
 
-async function send_dm(msg, content) {
-    return msg.author.send(content);
-}
-
-async function send_text(msg, content) {
-    return msg.channel.send(content);
-}
-
-async function send_message(msg, content) {
-    if (msg.channel.type == 'dm') {
-        return send_dm(msg, content);
-    }
-    else {
-        return send_text(msg, content);
-    }
-}
-
-createChannel = async function(channels, name, type, parent=undefined) {
-    for (var channel of channels.cache.values()) {
-        if (channel.name == name && channel.type == type) {
-            return channel.id;
-        }
-    }
-    var new_channel = await guild.channels.create(
-        name,
-        {
-            type: type,
-            parent: parent,
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: ['VIEW_CHANNEL'],
-                },
-                {
-                    id: guild.roles.cache.find(role => role.name === "Student").id,
-                    allow: ['VIEW_CHANNEL'],
-                },
-            ],
-        }
-    )
-    return new_channel.id
-}
-
-prepareChannels = function(channels) {
-    createChannel(channels, githubConfig.course, 'category').then( (textChannels) => {
-        createChannel(channels, 'general', 'text', textChannels);
-        createChannel(channels, 'assignments', 'text', textChannels);
-    });
-
-    createChannel(channels, githubConfig.course + ' Voice Channels', 'category').then( (voiceChannels) => {
-        createChannel(channels, 'general-voice', 'voice', voiceChannels);
-        createChannel(channels, 'virtual-classroom', 'voice', voiceChannels);
-    });
-
-    createChannel(channels, 'orbit', 'category').then( (orbitChannels) => {
-        createChannel(channels, 'sandbox', 'text', orbitChannels);
-        createChannel(channels, 'orbit-comms', 'text', orbitChannels);
-    })
-}
-
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     guild = client.guilds.cache.values().next().value;
-    prepareChannels(guild.channels);
+
+    utilities.createChannel(guild, githubConfig.course, 'category').then( (textChannels) => {
+        utilities.createChannel(guild, 'general', 'text', textChannels);
+        utilities.createChannel(guild, 'assignments', 'text', textChannels);
+    });
+
+    utilities.createChannel(guild, githubConfig.course + ' Voice Channels', 'category').then( (voiceChannels) => {
+        utilities.createChannel(guild, 'general-voice', 'voice', voiceChannels);
+        utilities.createChannel(guild, 'virtual-classroom', 'voice', voiceChannels);
+    });
+
+    utilities.createChannel(guild, 'orbit', 'category').then( (orbitChannels) => {
+        utilities.createChannel(guild, 'sandbox', 'text', orbitChannels);
+        utilities.createChannel(guild, 'orbit-comms', 'text', orbitChannels);
+    })
 })
 
 client.on('message', async msg => {
 
     if (msg.content === '!ping') {
-        send_dm(msg, 'pong!');
+        utilities.send_dm(msg, 'pong!');
         return;
     }
 
@@ -121,13 +75,13 @@ client.on('message', async msg => {
         }
 
         var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType)
-            reply = '';
-            for (card of cards) {
-                reply += card.note + '\n';
-            }
-            send_dm(msg, reply)
-                .then(_ => {})
-                .catch(console.error);
+        reply = '';
+        for (card of cards) {
+            reply += card.note + '\n';
+        }
+        utilities.send_dm(msg, reply)
+            .then(_ => {})
+            .catch(console.error);
     }
     if (command === '!grades') {
         var githubUserName = await db.getGitHubUserName(pool, msg.author.id);
@@ -140,7 +94,7 @@ client.on('message', async msg => {
             var c = JSON.parse(card.note);
             var repo = c.name + '-' + githubUserName
             try {
-                var raw_grade = await github.getActionAnnotation(restWithAuth, 'ruc-sci-comp', repo);
+                var raw_grade = await github.getActionAnnotation(restWithAuth, githubConfig.organization, repo);
             }
             catch (error) {
                 var raw_grade = `Points 0/${c.points}`
@@ -155,7 +109,7 @@ client.on('message', async msg => {
 
         if (total > 0) {
             reply += `${BB}Weighted Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-            send_dm(msg, reply)
+            utilities.send_dm(msg, reply)
                 .then(_ => {
                     if (msg.channel.type == 'text') {
                         msg.delete();
@@ -164,19 +118,19 @@ client.on('message', async msg => {
                 .catch(console.error);
         }
         else {
-            send_dm(msg, "No assignments have been released for grading!")
+            utilities.send_dm(msg, "No assignments have been released for grading!")
         }
     }
 
     if (command === '!info') {
         if (args.length == 0) {
-            send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
+            utilities.send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
             return;
         }
         var information = await github.getReposWithTopicsV2(graphqlWithAuth, githubConfig.organization, args);
         reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
         reply += information.join('\n')
-        send_message(msg, reply)
+        utilities.send_message(msg, reply)
             .then(_ => {})
             .catch(console.error);
     }
@@ -205,8 +159,8 @@ client.on('message', async msg => {
                                 if (confirmation.first().content.toLowerCase() == 'yes') {
                                     db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
                                         if (rowCount == 1) {
-                                            let studentRole = guild.roles.cache.find(role => role.name === "Student");
-                                            let member = guild.members.cache.find(member => member.id === msg.author.id)
+                                            let studentRole = utilities.getRoleByName(guild, "Student");
+                                            let member = utilities.getMemberById(guild, msg.author.id);
                                             member.roles.add(studentRole).catch(console.error);
                                             dmChannel.send(`Registered!`)
                                         }

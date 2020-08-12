@@ -1,41 +1,53 @@
-const B = '\`\`\`';
-const BB = B + B;
-
 module.exports = 
 {
-    parseAssignmentType: function(args) {
-        if (args.length == 0) {
-            return 'current'
+    getMemberById: function(guild, id) {
+        return guild.members.cache.find(member => member.id === id);
+    },
+
+    getRoleByName: function(guild, role) {
+        return guild.roles.cache.find(role => role.name === role);
+    },
+
+    send_dm: async function(msg, content) {
+        return msg.author.send(content);
+    },
+    
+    send_text: async function(msg, content) {
+        return msg.channel.send(content);
+    },
+    
+    send_message: async function(msg, content) {
+        if (msg.channel.type == 'dm') {
+            return send_dm(msg, content);
         }
         else {
-            return args[0].trim().toLowerCase();
+            return send_text(msg, content);
         }
     },
 
-    buildHomeworkList: async function(assignments) {
-        var reply = '';
-        for (assignment of assignments) {
-            reply += assignment + '\n';
+    createChannel: async function(guild, name, type, parent=undefined) {
+        for (var channel of guild.channels.cache.values()) {
+            if (channel.name == name && channel.type == type) {
+                return channel.id;
+            }
         }
-        return reply;
+        var new_channel = await guild.channels.create(
+            name,
+            {
+                type: type,
+                parent: parent,
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone,
+                        deny: ['VIEW_CHANNEL'],
+                    },
+                    {
+                        id: getRoleByName("Student").id,
+                        allow: ['VIEW_CHANNEL'],
+                    },
+                ],
+            }
+        )
+        return new_channel.id
     },
-
-    calculateGrade: async function(grades) {
-        score = 0.0;
-        total = 0.0;
-        reply = B;
-        for (var grade of grades) {
-            reply += grade + '\n';
-            score += grade.score;
-            total += grade.total;
-        }
-        reply += `${BB}Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
-        return reply;
-    },
-
-    buildReposWithTopicList: async function(information, args) {
-        var reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`;
-        reply += information.join('\n');
-        return reply;
-    }
 }
