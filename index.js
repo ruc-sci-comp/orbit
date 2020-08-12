@@ -173,7 +173,7 @@ client.on('message', async msg => {
             send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
             return;
         }
-        var information = await github.getReposWithTopics(graphqlWithAuth, githubConfig.organization, args);
+        var information = await github.getReposWithTopicsV2(graphqlWithAuth, githubConfig.organization, args);
         reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
         reply += information.join('\n')
         send_message(msg, reply)

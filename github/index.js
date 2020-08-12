@@ -123,6 +123,31 @@ module.exports =
         return [...new Set(repos)];
     },
 
+    getReposWithTopicsV2: async function (graphqlWithAuth, organization, searchTopics) {
+        repos = []
+        for (topic of searchTopics) {
+            var query = queries.getReposForTopicQuery;
+            var cursor = null;
+            var hasNextPage = false;
+            do {
+                args = {
+                    q: `org:${organization} topic:${topic}`,
+                    c: cursor
+                };
+                const data = await graphqlWithAuth(query, args)
+                for (repo of data.search.nodes) {
+                    var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                    repos.push(new Repository(repo.name, repo.url, topics));
+                }
+                if (data.search.pageInfo.hasNextPage) {
+                    cursor = data.search.pageInfo.endCursor
+                }
+            } while(hasNextPage)
+        }
+        return [...new Set(repos)];
+    }
+    },
+
     getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
         var query = queries.getGradeIssuesForUserQuery;
         grades = []
