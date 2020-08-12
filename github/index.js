@@ -60,8 +60,8 @@ module.exports =
                 l: organization,
                 c: cursor
             };
-            const result = await graphqlWithAuth(query, args)
-            for (repo of result.search.nodes) {
+            const {data} = await graphqlWithAuth(query, args)
+            for (repo of data.organization.repositories.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
@@ -84,8 +84,8 @@ module.exports =
                 ts: team,
                 c: cursor
             };
-            const result = await graphqlWithAuth(query, args)
-            for (repo of result.search.nodes) {
+            const {data} = await graphqlWithAuth(query, args)
+            for (repo of data.organization.team.repositories.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
@@ -107,8 +107,8 @@ module.exports =
                 l: organization,
                 c: cursor
             };
-            const result = await graphqlWithAuth(query, args)
-            for (repo of result.search.nodes) {
+            const {data} = await graphqlWithAuth(query, args)
+            for (repo of data.organization.repositories.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 let topicItersection = topics.filter(x => searchTopics.includes(x));
                 if (topicItersection && topicItersection.length) {
