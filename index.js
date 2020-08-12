@@ -74,7 +74,7 @@ client.on('message', async msg => {
             }
         }
 
-        var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, assignmentType)
+        var cards = await github.getCards(graphqlWithAuth, assignmentType)
         reply = '';
         for (card of cards) {
             reply += card.note + '\n';
@@ -85,7 +85,7 @@ client.on('message', async msg => {
     }
     if (command === '!grades') {
         var githubUserName = await db.getGitHubUserName(pool, msg.author.id);
-        var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed')
+        var cards = await github.getCards(graphqlWithAuth, 'completed')
         score = 0.0;
         total = 0.0;
         reply = B;
@@ -94,7 +94,7 @@ client.on('message', async msg => {
             var c = JSON.parse(card.note);
             var repo = c.name + '-' + githubUserName
             try {
-                var raw_grade = await github.getActionAnnotation(restWithAuth, githubConfig.organization, repo);
+                var raw_grade = await github.getActionAnnotation(restWithAuth, repo);
             }
             catch (error) {
                 var raw_grade = `Points 0/${c.points}`
@@ -127,7 +127,7 @@ client.on('message', async msg => {
             utilities.send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
             return;
         }
-        var information = await github.getReposWithTopicsV2(graphqlWithAuth, githubConfig.organization, args);
+        var information = await github.getReposWithTopicsV2(graphqlWithAuth, args);
         reply = `The following repositories are tagged with \`${args.join('\`, or \`')}\`\n`
         reply += information.join('\n')
         utilities.send_message(msg, reply)

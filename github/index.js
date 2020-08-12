@@ -1,12 +1,14 @@
+var config = require('../config')
 var queries = require('./queries')
+var githubConfig = config.githubConfig
 
 module.exports =
 {
-    getProjectId: async function (graphqlWithAuth, organization, project) {
+    getProjectId: async function (graphqlWithAuth) {
         var query = queries.getProjectIdQuery
         args = {
-            o: organization,
-            p: project
+            o: githubConfig.organization,
+            p: githubConfig.course
         };
         const result = await graphqlWithAuth(query, args);
         if (result.organization.projects.nodes.length) {
@@ -14,7 +16,7 @@ module.exports =
         }
     },
 
-    getCards: async function (graphqlWithAuth, organization, project, column) {
+    getCards: async function (graphqlWithAuth, column) {
         var query = queries.getCardsQuery;
         var cards = []
         var columnCursor = null;
@@ -24,8 +26,8 @@ module.exports =
         do {
             do {
                 args = {
-                    o: organization,
-                    p: project,
+                    o: githubConfig.organization,
+                    p: githubConfig.course,
                     c1: columnCursor,
                     c2: cardCursor
                 };
@@ -50,14 +52,14 @@ module.exports =
         return cards;
     },
 
-    getRepos: async function (graphqlWithAuth, organization) {
+    getRepos: async function (graphqlWithAuth) {
         repos = []
         var query = queries.getReposQuery;
         var cursor = null;
         var hasNextPage = false;
         do {
             args = {
-                l: organization,
+                l: githubConfig.organization,
                 c: cursor
             };
             const data = await graphqlWithAuth(query, args)
@@ -73,14 +75,14 @@ module.exports =
         return [...new Set(repos)];
     },
 
-    getReposForTeam: async function (graphqlWithAuth, organization, team) {
+    getReposForTeam: async function (graphqlWithAuth, team) {
         repos = []
         var query = queries.getReposForTeam;
         var cursor = null;
         var hasNextPage = false;
         do {
             args = {
-                l: organization,
+                l: githubConfig.organization,
                 ts: team,
                 c: cursor
             };
@@ -97,14 +99,14 @@ module.exports =
         return [...new Set(repos)];
     },
 
-    getReposWithTopics: async function (graphqlWithAuth, organization, searchTopics) {
+    getReposWithTopics: async function (graphqlWithAuth, searchTopics) {
         repos = []
         var query = queries.getReposQuery;
         var cursor = null;
         var hasNextPage = false;
         do {
             args = {
-                l: organization,
+                l: githubConfig.organization,
                 c: cursor
             };
             const data = await graphqlWithAuth(query, args)
@@ -123,7 +125,7 @@ module.exports =
         return [...new Set(repos)];
     },
 
-    getReposWithTopicsV2: async function (graphqlWithAuth, organization, searchTopics) {
+    getReposWithTopicsV2: async function (graphqlWithAuth, searchTopics) {
         repos = []
         for (topic of searchTopics) {
             var query = queries.getReposForTopicQuery;
@@ -131,7 +133,7 @@ module.exports =
             var hasNextPage = false;
             do {
                 args = {
-                    q: `org:${organization} topic:${topic}`,
+                    q: `org:${githubConfig.organization} topic:${topic}`,
                     c: cursor
                 };
                 const data = await graphqlWithAuth(query, args)
@@ -147,14 +149,14 @@ module.exports =
         return [...new Set(repos)];
     },
 
-    getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
+    getGradeIssuesForUser: async function (graphqlWithAuth, user, label) {
         var query = queries.getGradeIssuesForUserQuery;
         grades = []
         var cursor = null;
         var hasNextPage = false;
         do {
             args = {
-                q: `org:${organization} ${user} in:name`,
+                q: `org:${githubConfig.organization} ${user} in:name`,
                 l: label,
                 c: cursor
             };
