@@ -1,0 +1,19 @@
+query ($q: String!, $l: String!, $c: String) {
+    search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+        nodes {
+            ... on Repository {
+                name
+                issues(filterBy: {labels: $l}, first: 1) {
+                    nodes {
+                        title
+                        body
+                    }
+                }
+            }
+        }
+        pageInfo {
+            endCursor
+            hasNextPage
+        }
+    }
+}

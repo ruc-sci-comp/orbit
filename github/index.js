@@ -1,15 +1,9 @@
+var queries = require('./queries')
+
 module.exports =
 {
     getProjectId: async function (graphqlWithAuth, organization, project) {
-        var query = `query ($o: String!, $p: String!) {
-            organization(login: $o) {
-              projects(search: $p, first: 1) {
-                nodes {
-                  id
-                }
-              }
-            }
-          }`;
+        var query = queries.getProjectIdQuery
         args = {
             o: organization,
             p: project
@@ -21,32 +15,7 @@ module.exports =
     },
 
     getCards: async function (graphqlWithAuth, organization, project, column) {
-        var query = `query ($o: String!, $p: String!, $c1: String, $c2: String) {
-            organization(login: $o) {
-              projects(search: $p, first: 1) {
-                nodes {
-                  columns(first: 10, after: $c1) {
-                    nodes {
-                      name
-                      cards(first: 10, after: $c2) {
-                        nodes {
-                          note
-                        }
-                        pageInfo {
-                          hasNextPage
-                          endCursor
-                        }
-                      }
-                    }
-                    pageInfo {
-                      hasNextPage
-                      endCursor
-                    }
-                  }
-                }
-              }
-            }
-          }`;
+        var query = queries.getCardsQuery;
         var cards = []
         var columnCursor = null;
         var cardCursor = null;
@@ -83,20 +52,7 @@ module.exports =
 
     getRepos: async function (graphqlWithAuth, organization) {
         repos = []
-        var query = `query ($q: String!, $c: String) {
-            search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-              nodes {
-                ... on Repository {
-                  name
-                  url
-                }
-              }
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-            }
-          }`;
+        var query = queries.getReposQuery;
         var cursor = null;
         var hasNextPage = false;
         do {
@@ -117,26 +73,7 @@ module.exports =
     },
 
     getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
-        var query = `query ($q: String!, $l: String!, $c: String) {
-            search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-              nodes {
-                ... on Repository {
-                  name
-                  issues(filterBy: {labels: $l}, first: 1) {
-                    nodes {
-                      title
-                      body
-                    }
-                  }
-                }
-              }
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
-            }
-          }`;
-
+        var query = queries.getGradeIssuesForUserQuery;
         grades = []
         var cursor = null;
         var hasNextPage = false;
@@ -166,20 +103,7 @@ module.exports =
     getReposWithTopics: async function (graphqlWithAuth, organization, topics) {
         repos = []
         for (topic of topics) {
-            var query = `query ($q: String!, $c: String) {
-                search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-                  nodes {
-                    ... on Repository {
-                      name
-                      url
-                    }
-                  }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                }
-              }`;
+            var query = queries.getReposWithTopicsQuery;
             var cursor = null;
             var hasNextPage = false;
             do {

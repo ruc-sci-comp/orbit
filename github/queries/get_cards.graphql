@@ -1,0 +1,26 @@
+query ($o: String!, $p: String!, $c1: String, $c2: String) {
+    organization(login: $o) {
+        projects(search: $p, first: 1) {
+            nodes {
+                columns(first: 10, after: $c1) {
+                    nodes {
+                        name
+                        cards(first: 10, after: $c2) {
+                            nodes {
+                                note
+                            }
+                            pageInfo {
+                                hasNextPage
+                                endCursor
+                            }
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+        }
+    }
+}
