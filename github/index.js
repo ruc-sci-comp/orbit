@@ -145,7 +145,6 @@ module.exports =
             } while(hasNextPage)
         }
         return [...new Set(repos)];
-    }
     },
 
     getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
