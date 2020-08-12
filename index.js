@@ -95,7 +95,7 @@ client.on('ready', () => {
 client.on('message', async msg => {
 
     if (msg.content === '!ping') {
-        send_message(msg, 'pong!');
+        send_dm(msg, 'pong!');
         return;
     }
 
@@ -109,7 +109,7 @@ client.on('message', async msg => {
     var graphqlWithAuth = await auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath);
     var restWithAuth = await auth.getRestWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath);
 
-    if (msg.content.startsWith('!assignments')) {
+    if (command === '!assignments') {
         if (args.length == 0) {
             assignmentType = 'current';
         }
@@ -129,7 +129,7 @@ client.on('message', async msg => {
                 .then(_ => {})
                 .catch(console.error);
     }
-    if (msg.content.startsWith('!grades')) {
+    if (command === '!grades') {
         var githubUserName = await db.getGitHubUserName(pool, msg.author.id);
         var cards = await github.getCards(graphqlWithAuth, githubConfig.organization, githubConfig.course, 'completed')
         score = 0.0;
@@ -168,7 +168,7 @@ client.on('message', async msg => {
         }
     }
 
-    if (msg.content.startsWith('!info')) {
+    if (command === '!info') {
         if (args.length == 0) {
             send_message(msg, 'I need more information! Provide some keywords and I will find some repositories that match!');
             return;
@@ -181,7 +181,7 @@ client.on('message', async msg => {
             .catch(console.error);
     }
 
-    if (msg.content.startsWith('!register')) {
+    if (command === '!register') {
         var dmChannel = await msg.author.createDM();
         var filter = m => m.content.length != 0;
         var messageAwaitObject = { max: 1, time: 30000, errors: ['time'] };
