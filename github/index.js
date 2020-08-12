@@ -75,7 +75,7 @@ module.exports =
 
     getReposForTeam: async function (graphqlWithAuth, organization, team) {
         repos = []
-        var query = queries.getReposQuery;
+        var query = queries.getReposForTeam;
         var cursor = null;
         var hasNextPage = false;
         do {
