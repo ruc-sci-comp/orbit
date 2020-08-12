@@ -60,13 +60,13 @@ module.exports =
                 l: organization,
                 c: cursor
             };
-            const {data} = await graphqlWithAuth(query, args)
+            const data = await graphqlWithAuth(query, args)
             for (repo of data.organization.repositories.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
-            if (hasNextPage = result.search.pageInfo.hasNextPage) {
-                cursor = result.search.pageInfo.endCursor
+            if (hasNextPage = data.organization.repositories.pageInfo.hasNextPage) {
+                cursor = data.organization.repositories.pageInfo.endCursor
             }
         } while(hasNextPage)
 
@@ -89,8 +89,8 @@ module.exports =
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
-            if (hasNextPage = result.search.pageInfo.hasNextPage) {
-                cursor = result.search.pageInfo.endCursor
+            if (hasNextPage =  data.organization.team.repositories.pageInfo.hasNextPage) {
+                cursor =  data.organization.team.repositories.pageInfo.endCursor
             }
         } while(hasNextPage)
 
@@ -107,7 +107,7 @@ module.exports =
                 l: organization,
                 c: cursor
             };
-            const {data} = await graphqlWithAuth(query, args)
+            const data = await graphqlWithAuth(query, args)
             for (repo of data.organization.repositories.nodes) {
                 var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
                 let topicItersection = topics.filter(x => searchTopics.includes(x));
@@ -115,8 +115,8 @@ module.exports =
                     repos.push(new Repository(repo.name, repo.url, topics));
                 }
             }
-            if (hasNextPage = result.search.pageInfo.hasNextPage) {
-                cursor = result.search.pageInfo.endCursor
+            if (hasNextPage = data.organization.repositories.pageInfo.hasNextPage) {
+                cursor = data.organization.repositories.pageInfo.endCursor
             }
         } while(hasNextPage)
 
