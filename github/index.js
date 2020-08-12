@@ -62,7 +62,7 @@ module.exports =
             };
             const data = await graphqlWithAuth(query, args)
             for (repo of data.organization.repositories.nodes) {
-                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
             if (hasNextPage = data.organization.repositories.pageInfo.hasNextPage) {
@@ -86,7 +86,7 @@ module.exports =
             };
             const {data} = await graphqlWithAuth(query, args)
             for (repo of data.organization.team.repositories.nodes) {
-                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
                 repos.push(new Repository(repo.name, repo.url, topics));
             }
             if (hasNextPage =  data.organization.team.repositories.pageInfo.hasNextPage) {
@@ -109,9 +109,9 @@ module.exports =
             };
             const data = await graphqlWithAuth(query, args)
             for (repo of data.organization.repositories.nodes) {
-                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
-                let topicItersection = topics.filter(x => searchTopics.includes(x));
-                if (topicItersection && topicItersection.length) {
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                let topicIntersection = topics.filter(x => searchTopics.includes(x));
+                if (topicIntersection && topicIntersection.length) {
                     repos.push(new Repository(repo.name, repo.url, topics));
                 }
             }
