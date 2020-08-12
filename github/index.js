@@ -57,7 +57,7 @@ module.exports =
         var hasNextPage = false;
         do {
             args = {
-                q: `org:${organization}`,
+                l: `org:${organization}`,
                 c: cursor
             };
             const result = await graphqlWithAuth(query, args)
@@ -104,7 +104,7 @@ module.exports =
         var hasNextPage = false;
         do {
             args = {
-                q: `org:${organization}`,
+                l: `org:${organization}`,
                 c: cursor
             };
             const result = await graphqlWithAuth(query, args)
