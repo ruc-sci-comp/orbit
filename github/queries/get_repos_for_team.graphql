@@ -1,0 +1,23 @@
+query ($l: String!, $ts: String!, $c: String) {
+    organization(login: $l) {
+        team(slug: $ts) {
+            repositories(first: 10, after: $c) {
+                nodes {
+                    name
+                    url
+                    repositoryTopics(first: 10) {
+                        nodes {
+                            topic {
+                                name
+                            }
+                        }
+                    }
+                }
+                pageInfo {
+                    hasNextPage
+                    endCursor
+                }
+            }
+        }
+    }
+}

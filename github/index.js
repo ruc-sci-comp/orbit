@@ -50,7 +50,58 @@ module.exports =
         return cards;
     },
 
-    getRepos: async function (graphqlWithAuth, organization) {
+    getRepos: async function (graphqlWithAuth, organization, topic=undefined) {
+        repos = []
+        var query = queries.getReposQuery;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                q: `org:${organization}`,
+                c: cursor
+            };
+            if (topics !== undefined) {
+                args.q += 
+            }
+
+            const result = await graphqlWithAuth(query, args)
+            for (repo of result.search.nodes) {
+                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
+                repos.push(new Repository(repo.name, repo.url, topics));
+            }
+            if (hasNextPage = result.search.pageInfo.hasNextPage) {
+                cursor = result.search.pageInfo.endCursor
+            }
+        } while(hasNextPage)
+
+        return [...new Set(repos)];
+    },
+
+    getReposForTeam: async function (graphqlWithAuth, organization, team) {
+        repos = []
+        var query = queries.getReposQuery;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                l: organization,
+                ts: team,
+                c: cursor
+            };
+            const result = await graphqlWithAuth(query, args)
+            for (repo of result.search.nodes) {
+                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
+                repos.push(new Repository(repo.name, repo.url, topics));
+            }
+            if (hasNextPage = result.search.pageInfo.hasNextPage) {
+                cursor = result.search.pageInfo.endCursor
+            }
+        } while(hasNextPage)
+
+        return [...new Set(repos)];
+    },
+
+    getReposWithTopics: async function (graphqlWithAuth, organization, searchTopics) {
         repos = []
         var query = queries.getReposQuery;
         var cursor = null;
@@ -62,7 +113,11 @@ module.exports =
             };
             const result = await graphqlWithAuth(query, args)
             for (repo of result.search.nodes) {
-                repos.push(new Repository(repo.name, repo.url));
+                var topics = repo.repositoryTopics.nodes.map( topic => topic.name )
+                let topicItersection = topics.filter(x => searchTopics.includes(x));
+                if (topicItersection && topicItersection.length) {
+                    repos.push(new Repository(repo.name, repo.url, topics));
+                }
             }
             if (hasNextPage = result.search.pageInfo.hasNextPage) {
                 cursor = result.search.pageInfo.endCursor
@@ -100,29 +155,6 @@ module.exports =
         return grades;
     },
 
-    getReposWithTopics: async function (graphqlWithAuth, organization, topics) {
-        repos = []
-        for (topic of topics) {
-            var query = queries.getReposWithTopicsQuery;
-            var cursor = null;
-            var hasNextPage = false;
-            do {
-                args = {
-                    q: `org:${organization} topic:${topic}`,
-                    c: cursor
-                };
-                const result = await graphqlWithAuth(query, args)
-                for (repo of result.search.nodes) {
-                    repos.push(new Repository(repo.name, repo.url));
-                }
-                if (hasNextPage = result.search.pageInfo.hasNextPage) {
-                    cursor = result.search.pageInfo.endCursor
-                }
-            } while(hasNextPage)
-        }
-        return [...new Set(repos)];
-    },
-
     getActionAnnotation: async function (restWithAuth, owner, repo) {
       var result = await restWithAuth.checks.listForRef({
           owner: owner,
@@ -146,9 +178,10 @@ class Grade {
 }
 
 class Repository {
-    constructor(r, u) {
+    constructor(r, u, t) {
         this.name = r;
-        this.url = u
+        this.url = u;
+        this.topics = t;
     }
 
     toString() {

@@ -1,14 +1,21 @@
-query ($q: String!, $c: String) {
-    search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-        nodes {
-            ... on Repository {
+query ($l: String!, $c: String) {
+    organization(login: $l) {
+        repositories(first: 10, after: $c) {
+            nodes {
                 name
                 url
+                repositoryTopics(first: 10) {
+                    nodes {
+                        topic {
+                            name
+                        }
+                    }
+                }
             }
-        }
-        pageInfo {
-            hasNextPage
-            endCursor
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
         }
     }
 }
