@@ -148,24 +148,29 @@ client.on('message', async msg => {
             dmChannel.send('`This Discord account is already registered! Contact your instructor.`')
             return;
         }
-        dmChannel.send('`Enter your full name (First Last) / [or cancel to quit]`').then(() => {
+        dmChannel.send('`Enter your full name (preferred first name and last name) / [or cancel to quit]`').then(() => {
             dmChannel.awaitMessages(filter, messageAwaitObject).then(name => {
-                if (name.first().content.toLowerCase() == 'cancel') {
+                name = name.first().content;
+                if (name == 'cancel') {
                     return;
                 }
-                dmChannel.send('`Enter your GitHub Username / [or cancel to quite]`').then(() => {
+                dmChannel.send('`Enter your GitHub Username / [or cancel to quit]`').then(() => {
                     dmChannel.awaitMessages(filter, messageAwaitObject).then(githubUserName => {
-                        if (githubUserName.first().content.toLowerCase() == 'cancel') {
+                        githubUserName = githubUserName.first().content;
+                        if (githubUserName == 'cancel') {
                             return;
                         }
-                        dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\`Name: ${name.first().content}\`\n\`GitHub: ${githubUserName.first().content}\``).then(() => {
+                        dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\` - Name:   ${name.first().content}\`\n\` - GitHub: ${githubUserName.first().content}\``).then(() => {
                             dmChannel.awaitMessages(filter, messageAwaitObject).then(confirmation => {
-                                if (confirmation.first().content.toLowerCase() == 'yes') {
-                                    db.registerUser(pool, name.first().content, msg.author.id, githubUserName.first().content).then( rowCount => {
+                                confirmation = confirmation.first().content;
+                                if (confirmation.toLowerCase() == 'yes') {
+                                    db.registerUser(pool, name, msg.author.id, githubUserName).then( rowCount => {
                                         if (rowCount == 1) {
                                             let studentRole = utilities.getRoleByName(guild, "Student");
                                             let member = utilities.getMemberById(guild, msg.author.id);
+                                            var nickname = name.split(' ')[0] + ' ' + '<' + githubUserName + '>'
                                             member.roles.add(studentRole).catch(console.error);
+                                            member.setNickname(nickname)
                                             dmChannel.send(`Registered!`)
                                         }
                                         else {

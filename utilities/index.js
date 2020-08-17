@@ -3,7 +3,7 @@ function getMemberById(guild, id) {
 }
 
 function getRoleByName(guild, role) {
-    return guild.roles.cache.find(role => role.name === role);
+    return guild.roles.cache.find(r => r.name === role);
 }
 
 async function send_dm(msg, content) {
