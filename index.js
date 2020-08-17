@@ -160,7 +160,7 @@ client.on('message', async msg => {
                         if (githubUserName == 'cancel') {
                             return;
                         }
-                        dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\` - Name:   ${name.first().content}\`\n\` - GitHub: ${githubUserName.first().content}\``).then(() => {
+                        dmChannel.send(`\`Are you sure you want to proceed? This cannot be undone! [yes/no]\`\n\` - Name:   ${name}\`\n\` - GitHub: ${githubUserName}\``).then(() => {
                             dmChannel.awaitMessages(filter, messageAwaitObject).then(confirmation => {
                                 confirmation = confirmation.first().content;
                                 if (confirmation.toLowerCase() == 'yes') {
