@@ -60,6 +60,10 @@ client.on('message', async msg => {
         return;
     }
 
+    if (msg.channel.type == 'text' && ['!assignments', '!grades', '!info'].includes(command) && msg.channel.name != 'orbit-comms') {
+        return;
+    }
+
     var graphqlWithAuth = await auth.getGraphqlWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.privateKeyPath);
     var restWithAuth = await auth.getRestWithAuth(githubConfig.appID, githubConfig.installationID, githubConfig.clientID, githubConfig.clientSecret, githubConfig.privateKeyPath);
 
