@@ -30,20 +30,20 @@ client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     guild = client.guilds.cache.values().next().value;
 
-    utilities.createChannel(guild, githubConfig.course, 'category').then( (textChannels) => {
-        utilities.createChannel(guild, 'general', 'text', textChannels);
-        utilities.createChannel(guild, 'assignments', 'text', textChannels);
-    });
+    // utilities.createChannel(guild, githubConfig.course, 'category').then( (textChannels) => {
+    //     utilities.createChannel(guild, 'general', 'text', textChannels);
+    //     utilities.createChannel(guild, 'assignments', 'text', textChannels);
+    // });
 
-    utilities.createChannel(guild, githubConfig.course + ' Voice Channels', 'category').then( (voiceChannels) => {
-        utilities.createChannel(guild, 'general-voice', 'voice', voiceChannels);
-        utilities.createChannel(guild, 'virtual-classroom', 'voice', voiceChannels);
-    });
+    // utilities.createChannel(guild, githubConfig.course + ' Voice Channels', 'category').then( (voiceChannels) => {
+    //     utilities.createChannel(guild, 'general-voice', 'voice', voiceChannels);
+    //     utilities.createChannel(guild, 'virtual-classroom', 'voice', voiceChannels);
+    // });
 
-    utilities.createChannel(guild, 'orbit', 'category').then( (orbitChannels) => {
-        utilities.createChannel(guild, 'sandbox', 'text', orbitChannels);
-        utilities.createChannel(guild, 'orbit-comms', 'text', orbitChannels);
-    })
+    // utilities.createChannel(guild, 'orbit', 'category').then( (orbitChannels) => {
+    //     utilities.createChannel(guild, 'sandbox', 'text', orbitChannels);
+    //     utilities.createChannel(guild, 'orbit-comms', 'text', orbitChannels);
+    // })
 })
 
 client.on('message', async msg => {
@@ -60,7 +60,7 @@ client.on('message', async msg => {
         return;
     }
 
-    if (msg.channel.type == 'text' && ['!assignments', '!grades', '!info'].includes(command) && msg.channel.name != 'orbit-comms') {
+    if (msg.channel.type == 'text' && ['!assignments', '!grades', '!info'].includes(command) && !['orbit-comms', 'sandbox'].includes(msg.channel.name) ) {
         return;
     }
 
@@ -88,31 +88,52 @@ client.on('message', async msg => {
             .catch(console.error);
     }
     if (command === '!grades') {
-        var githubUserName = await db.getGitHubUserName(pool, msg.author.id);
-        var cards = await github.getCards(graphqlWithAuth, 'completed')
         score = 0.0;
         total = 0.0;
         reply = B;
 
-        for (var card of cards) {
-            var c = JSON.parse(card.note);
-            var repo = c.name + '-' + githubUserName
-            try {
-                var raw_grade = await github.getActionAnnotation(restWithAuth, repo);
+        var grades = args.length === 0 ?
+            await db.getGrades(pool, msg.author.id) :
+            await db.getSpecificGrades(pool, msg.author.id, args);
+
+        for (var task of grades) {
+            if (task.type === 'extra-credit') {
+                continue;
             }
-            catch (error) {
-                var raw_grade = `Points 0/${c.points}`
+
+            reply += task.name.padEnd(26, ' ') + '| ' + task.score + '/' + task.points + '\n';
+            if (task.points > 0 && task.type) {
+                score += task.score * githubConfig.gradeWeights[task.type];
+                total += task.points * githubConfig.gradeWeights[task.type];
             }
-            var [grade_score, grade_total] = raw_grade.split(' ')[1].trim().split('/');
-            reply += c.name + ': ' + grade_score.padStart(3, ' ') + '/' + grade_total.padStart(3, ' ') + '\n';
-            if (c.points > 0) {
-                score += grade_score * githubConfig.gradeWeights[c.category];
-                total += grade_total * githubConfig.gradeWeights[c.category];
+        }
+
+        reply += BB;
+        var ecTotal = 0.0;
+        for (var task of grades) {
+            if (task.type === 'extra-credit') {
+                reply += task.name.padEnd(26, ' ') + '| ' + task.score + '/' + task.points + '\n';
+                ecTotal += parseFloat(task.score);
             }
         }
 
         if (total > 0) {
-            reply += `${BB}Weighted Course Grade: ${score}/${total} = ${100.0 * score/total}${B}`;
+            reply = B + 'Grade'.padEnd(26, ' ') + '| Score/Total\n' + B
+                + reply;
+
+            console.log(ecTotal);
+
+            var weightedGrade = 100.0 * score / total;
+            var finalGrade = weightedGrade + ecTotal;
+            var letterGrade = 'F';
+            if (finalGrade > 59.49) letterGrade = 'D';
+            if (finalGrade > 69.49) letterGrade = 'C';
+            if (finalGrade > 74.49) letterGrade = 'C+';
+            if (finalGrade > 79.49) letterGrade = 'B';
+            if (finalGrade > 84.49) letterGrade = 'B+';
+            if (finalGrade > 89.49) letterGrade = 'A';
+
+            reply += `${BB}Weighted Course Grade = ${weightedGrade} + ${ecTotal}EC  =  ${finalGrade} (${letterGrade}) ${B}`;
             utilities.send_dm(msg, reply)
                 .then(_ => {
                     if (msg.channel.type == 'text') {
@@ -122,7 +143,7 @@ client.on('message', async msg => {
                 .catch(console.error);
         }
         else {
-            utilities.send_dm(msg, "No assignments have been released for grading!")
+            utilities.send_dm(msg, "No assignments found!")
         }
     }
 
