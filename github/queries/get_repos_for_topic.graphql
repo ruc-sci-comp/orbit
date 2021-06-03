@@ -1,0 +1,21 @@
+query ($q: String!, $c: String) {
+    search(query: $q, type: REPOSITORY, first: 10, after: $c) {
+        nodes {
+            ... on Repository {
+                name
+                url
+                repositoryTopics(first: 10) {
+                    nodes {
+                        topic {
+                        name
+                        }
+                    }
+                }
+            }
+        }
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+    }
+}

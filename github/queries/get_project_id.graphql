@@ -1,0 +1,9 @@
+query ($o: String!, $p: String!) {
+    organization(login: $o) {
+        projects(search: $p, first: 1) {
+            nodes {
+                id
+            }
+        }
+    }
+}

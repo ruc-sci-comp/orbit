@@ -1,18 +1,14 @@
+var config = require('../config')
+var queries = require('./queries')
+var githubConfig = config.githubConfig
+
 module.exports =
 {
-    getProjectId: async function (graphqlWithAuth, organization, project) {
-        var query = `query ($o: String!, $p: String!) {
-            organization(login: $o) {
-              projects(search: $p, first: 1) {
-                nodes {
-                  id
-                }
-              }
-            }
-          }`;
+    getProjectId: async function (graphqlWithAuth) {
+        var query = queries.getProjectIdQuery
         args = {
-            o: organization,
-            p: project
+            o: githubConfig.organization,
+            p: githubConfig.course
         };
         const result = await graphqlWithAuth(query, args);
         if (result.organization.projects.nodes.length) {
@@ -20,33 +16,8 @@ module.exports =
         }
     },
 
-    getCards: async function (graphqlWithAuth, organization, project, column) {
-        var query = `query ($o: String!, $p: String!, $c1: String, $c2: String) {
-            organization(login: $o) {
-              projects(search: $p, first: 1) {
-                nodes {
-                  columns(first: 10, after: $c1) {
-                    nodes {
-                      name
-                      cards(first: 10, after: $c2) {
-                        nodes {
-                          note
-                        }
-                        pageInfo {
-                          hasNextPage
-                          endCursor
-                        }
-                      }
-                    }
-                    pageInfo {
-                      hasNextPage
-                      endCursor
-                    }
-                  }
-                }
-              }
-            }
-          }`;
+    getCards: async function (graphqlWithAuth, column) {
+        var query = queries.getCardsQuery;
         var cards = []
         var columnCursor = null;
         var cardCursor = null;
@@ -55,8 +26,8 @@ module.exports =
         do {
             do {
                 args = {
-                    o: organization,
-                    p: project,
+                    o: githubConfig.organization,
+                    p: githubConfig.course,
                     c1: columnCursor,
                     c2: cardCursor
                 };
@@ -81,33 +52,111 @@ module.exports =
         return cards;
     },
 
-    getGradeIssuesForUser: async function (graphqlWithAuth, organization, user, label) {
-        var query = `query ($q: String!, $l: String!, $c: String) {
-            search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-              nodes {
-                ... on Repository {
-                  name
-                  issues(filterBy: {labels: $l}, first: 1) {
-                    nodes {
-                      title
-                      body
-                    }
-                  }
-                }
-              }
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
+    getRepos: async function (graphqlWithAuth) {
+        repos = []
+        var query = queries.getReposQuery;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                l: githubConfig.organization,
+                c: cursor
+            };
+            const data = await graphqlWithAuth(query, args)
+            for (repo of data.organization.repositories.nodes) {
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                repos.push(new Repository(repo.name, repo.url, topics));
             }
-          }`;
+            if (hasNextPage = data.organization.repositories.pageInfo.hasNextPage) {
+                cursor = data.organization.repositories.pageInfo.endCursor
+            }
+        } while(hasNextPage)
 
+        return [...new Set(repos)];
+    },
+
+    getReposForTeam: async function (graphqlWithAuth, team) {
+        repos = []
+        var query = queries.getReposForTeam;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                l: githubConfig.organization,
+                ts: team,
+                c: cursor
+            };
+            const {data} = await graphqlWithAuth(query, args)
+            for (repo of data.organization.team.repositories.nodes) {
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                repos.push(new Repository(repo.name, repo.url, topics));
+            }
+            if (hasNextPage =  data.organization.team.repositories.pageInfo.hasNextPage) {
+                cursor =  data.organization.team.repositories.pageInfo.endCursor
+            }
+        } while(hasNextPage)
+
+        return [...new Set(repos)];
+    },
+
+    getReposWithTopics: async function (graphqlWithAuth, searchTopics) {
+        repos = []
+        var query = queries.getReposQuery;
+        var cursor = null;
+        var hasNextPage = false;
+        do {
+            args = {
+                l: githubConfig.organization,
+                c: cursor
+            };
+            const data = await graphqlWithAuth(query, args)
+            for (repo of data.organization.repositories.nodes) {
+                var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                let topicIntersection = topics.filter(x => searchTopics.includes(x));
+                if (topicIntersection && topicIntersection.length) {
+                    repos.push(new Repository(repo.name, repo.url, topics));
+                }
+            }
+            if (hasNextPage = data.organization.repositories.pageInfo.hasNextPage) {
+                cursor = data.organization.repositories.pageInfo.endCursor
+            }
+        } while(hasNextPage)
+
+        return [...new Set(repos)];
+    },
+
+    getReposWithTopicsV2: async function (graphqlWithAuth, searchTopics) {
+        repos = []
+        for (topic of searchTopics) {
+            var query = queries.getReposForTopicQuery;
+            var cursor = null;
+            var hasNextPage = false;
+            do {
+                args = {
+                    q: `org:${githubConfig.organization} topic:${topic}`,
+                    c: cursor
+                };
+                const data = await graphqlWithAuth(query, args)
+                for (repo of data.search.nodes) {
+                    var topics = repo.repositoryTopics.nodes.map( topicObject => topicObject.topic.name )
+                    repos.push(new Repository(repo.name, repo.url, topics));
+                }
+                if (data.search.pageInfo.hasNextPage) {
+                    cursor = data.search.pageInfo.endCursor
+                }
+            } while(hasNextPage)
+        }
+        return [...new Set(repos)];
+    },
+
+    getGradeIssuesForUser: async function (graphqlWithAuth, user, label) {
+        var query = queries.getGradeIssuesForUserQuery;
         grades = []
         var cursor = null;
         var hasNextPage = false;
         do {
             args = {
-                q: `org:${organization} ${user} in:name`,
+                q: `org:${githubConfig.organization} ${user} in:name`,
                 l: label,
                 c: cursor
             };
@@ -128,40 +177,13 @@ module.exports =
         return grades;
     },
 
-    getReposWithTopics: async function (graphqlWithAuth, organization, topics) {
-        repos = []
-        for (topic of topics) {
-            var query = `query ($q: String!, $c: String) {
-                search(query: $q, type: REPOSITORY, first: 10, after: $c) {
-                  nodes {
-                    ... on Repository {
-                      name
-                      url
-                    }
-                  }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                }
-              }`;
-            var cursor = null;
-            var hasNextPage = false;
-            do {
-                args = {
-                    q: `org:${organization} topic:${topic}`,
-                    c: cursor
-                };
-                const result = await graphqlWithAuth(query, args)
-                for (repo of result.search.nodes) {
-                    repos.push(new Repository(repo.name, repo.url));
-                }
-                if (result.search.pageInfo.hasNextPage) {
-                    cursor = result.search.pageInfo.endCursor
-                }
-            } while(hasNextPage)
-        }
-        return [...new Set(repos)];
+    getActionAnnotation: async function (restWithAuth, owner, repo) {
+      var result = await restWithAuth.checks.listForRef({
+          owner: owner,
+          repo: repo,
+          ref: 'master'
+      })
+      return result.data.check_runs[0].output.text;
     }
 }
 
@@ -178,9 +200,10 @@ class Grade {
 }
 
 class Repository {
-    constructor(r, u) {
+    constructor(r, u, t) {
         this.name = r;
-        this.url = u
+        this.url = u;
+        this.topics = t;
     }
 
     toString() {
